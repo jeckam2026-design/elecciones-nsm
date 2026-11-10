@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f2b55%22/%3E%3Ctext x=%2250%22 y=%2272%22 font-size=%2266%22 text-anchor=%22middle%22 fill=%22%23f2b705%22%3E✓%3C/text%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flash Electoral · Elecciones NSM 2027</title>
+<style>
+  :root { --azul: #0b2349; --azul2: #163f7a; --oro: #f5c02a; --oro2: #ffde7a; --blanco: #f6f8fc; --suave: #a9b8d3; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--blanco);
+    background: radial-gradient(1200px 700px at 15% 10%, #1d4c8f 0%, transparent 60%), radial-gradient(900px 600px at 90% 90%, #0f3a72 0%, transparent 60%), var(--azul);
+    font-size: clamp(14px, 1.15vw, 26px);
+  }
+  .cab { display: flex; align-items: center; gap: 1.2em; padding: 1.4em 2.4em 0.6em; }
+  .cab img { height: 4.2em; }
+  .cab .t1 { font-size: 1.15em; color: var(--suave); letter-spacing: .04em; }
+  .cab .t2 { font-size: 2em; font-weight: 800; letter-spacing: .01em; }
+  .cab .reloj { margin-left: auto; font-size: 2.2em; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--oro); }
+  .cinta { position: fixed; top: 1.2em; left: 50%; transform: translateX(-50%); border-radius: 999px; background: #7b3fe4; color: #fff; padding: .4em 1.6em; font-weight: 800; letter-spacing: .15em; z-index: 30; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+  #escena { position: absolute; inset: 7.6em 0 0 0; padding: 0 2.4em 2em; }
+  .centro { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .grande { font-size: 4.6em; font-weight: 900; letter-spacing: .02em; margin: 0; line-height: 1.05; }
+  .sub { font-size: 1.8em; color: var(--suave); margin-top: .6em; }
+  .punto { display: inline-block; width: .55em; height: .55em; border-radius: 50%; background: #2fd36f; margin-right: .35em; animation: late 1.2s infinite; vertical-align: middle; }
+  @keyframes late { 50% { opacity: .25; } }
+
+  /* Participación */
+  .part { display: grid; grid-template-columns: 1fr 1.25fr; gap: 3em; height: 100%; align-items: center; }
+  .anillo { position: relative; width: min(34vw, 62vh); aspect-ratio: 1; margin: 0 auto; }
+  .anillo svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .anillo .val { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .anillo .val b { font-size: 6em; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+  .anillo .val span { font-size: 1.5em; color: var(--suave); }
+  .grados h2 { font-size: 2.6em; margin: 0 0 .2em; }
+  .grados .gf { display: grid; grid-template-columns: 6.5em 1fr 7.5em; gap: 1em; align-items: center; margin: 1.1em 0; font-size: 1.45em; }
+  .grados .barra { height: 1.15em; background: rgba(255,255,255,.1); border-radius: 999px; overflow: hidden; }
+  .grados .barra div { height: 100%; background: linear-gradient(90deg, var(--oro), var(--oro2)); border-radius: 999px; transition: width 1s; }
+  .grados .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--suave); }
+
+  /* Resultados */
+  .res { display: flex; flex-direction: column; height: 100%; }
+  .res-tit { display: flex; align-items: baseline; gap: 1em; margin-bottom: .6em; }
+  .res-tit h2 { font-size: 2.8em; margin: 0; color: var(--oro); letter-spacing: .05em; }
+  .res-tit span { font-size: 1.4em; color: var(--suave); }
+  .filas { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .fila { --fh: 120px; height: var(--fh); flex: none; font-size: clamp(11px, calc(var(--fh) * .165), 23px); display: grid; grid-template-columns: calc(var(--fh) - 14px) minmax(10em, 17em) 1fr 7.5em; gap: 1.1em; align-items: center; background: rgba(255,255,255,.06); border-radius: 14px; padding: 7px 1.2em 7px 7px; position: relative; transition: background .6s; }
+  .fila .sim { width: calc(var(--fh) - 14px); height: calc(var(--fh) - 14px); background: #fff; border-radius: 10px; display: grid; place-items: center; overflow: hidden; }
+  .fila .sim img { width: 92%; height: 92%; object-fit: contain; }
+  .fila .sim .ns { width: 100%; height: 100%; display: grid; place-items: center; font-size: 2.6em; font-weight: 900; color: #fff; }
+  .fila .nom b { display: block; font-size: 1.05em; color: var(--oro); }
+  .fila .nom span { display: block; font-size: 1.5em; font-weight: 800; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+  .fila .nom small { display: block; font-size: 1.05em; color: var(--suave); }
+  .fila .pista { height: 2.2em; background: rgba(255,255,255,.08); border-radius: .6em; overflow: hidden; }
+  .fila .pista div { height: 100%; width: 0; border-radius: .6em; background: linear-gradient(90deg, #3d7fd6, #6fb0ff); transition: width 5s cubic-bezier(.2,.7,.2,1); }
+  .fila .num { text-align: right; }
+  .fila .num b { display: block; font-size: 2.6em; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+  .fila .num span { font-size: 1.3em; color: var(--suave); font-variant-numeric: tabular-nums; }
+  .fila.blanco { background: rgba(255,255,255,.03); }
+  .fila.blanco .pista div { background: linear-gradient(90deg, #8a96ab, #c2cad8); }
+  .fila.gana { background: rgba(245,192,42,.18); box-shadow: inset 0 0 0 3px var(--oro); }
+  .fila.gana .pista div { background: linear-gradient(90deg, var(--oro), var(--oro2)); }
+  .pie-res { display: flex; gap: 2.4em; font-size: 1.45em; color: var(--suave); margin-top: .8em; }
+  .pie-res b { color: var(--blanco); font-variant-numeric: tabular-nums; }
+
+  /* Cuenta regresiva y ganadora */
+  .capa { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: radial-gradient(circle at center, rgba(11,35,73,.92), rgba(5,15,35,.98)); }
+  .capa .flash { font-size: 7em; font-weight: 900; color: var(--oro); letter-spacing: .08em; animation: brillo 1.4s ease-in-out infinite; }
+  .capa .cuenta { font-size: 16em; font-weight: 900; line-height: 1; animation: zoom 1s ease-out; }
+  @keyframes brillo { 50% { text-shadow: 0 0 .5em rgba(245,192,42,.8); transform: scale(1.03); } }
+  @keyframes zoom { from { transform: scale(2.2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .ganadora { position: fixed; inset: 0; z-index: 35; display: flex; align-items: center; justify-content: center; background: rgba(5,15,35,.78); animation: aparece .8s ease-out; }
+  .ganadora .caja { background: linear-gradient(160deg, #173f7c, #0b2349); border: .25em solid var(--oro); border-radius: 2em; padding: 2.2em 4em; text-align: center; box-shadow: 0 2em 6em rgba(0,0,0,.5); max-width: 80vw; }
+  .ganadora .et { font-size: 2.2em; color: var(--oro); font-weight: 900; letter-spacing: .12em; }
+  .ganadora .sim { width: 16em; height: 16em; background: #fff; border-radius: 1.4em; margin: .8em auto; display: grid; place-items: center; overflow: hidden; }
+  .ganadora .sim img { width: 92%; height: 92%; object-fit: contain; }
+  .ganadora .sim .ns { width: 100%; height: 100%; display: grid; place-items: center; font-size: 8em; font-weight: 900; color: #fff; }
+  .ganadora .nom { font-size: 3.4em; font-weight: 900; line-height: 1.1; }
+  .ganadora .cand { font-size: 2em; margin-top: .3em; }
+  .ganadora .cand small { display: block; font-size: .6em; color: var(--suave); letter-spacing: .1em; }
+  .ganadora .votos { font-size: 1.7em; color: var(--oro2); margin-top: .5em; }
+  @keyframes aparece { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
+  #confeti { position: fixed; inset: 0; pointer-events: none; z-index: 45; }
+  #btnPantalla { position: fixed; bottom: 1em; right: 1em; z-index: 50; background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.3); border-radius: .6em; padding: .6em 1em; font-size: .9em; cursor: pointer; }
+  #error { position: fixed; bottom: 1em; left: 1em; color: #ffb3b3; font-size: .9em; z-index: 50; }
+</style>
+</head>
+<body>
+<div class="cab">
+  <img id="logo" alt="" style="display:none">
+  <div><div class="t1" id="tInst">I.E.E. "Nuestra Señora de las Mercedes" – Ayacucho</div><div class="t2" id="tElec">Elección del Municipio Escolar 2027</div></div>
+  <div class="reloj" id="reloj">--:--</div>
+</div>
+<div class="cinta" id="cinta" style="display:none">SIMULACRO</div>
+<div id="escena"><div class="centro"><p class="sub">Conectando…</p></div></div>
+<canvas id="confeti"></canvas>
+<button id="btnPantalla" onclick="pantallaCompleta()">⛶ Pantalla completa</button>
+<div id="error"></div>
+
+<script src="config.js"></script>
+<script src="comun.js"></script>
+<script>
+'use strict';
+const { api, esc } = window.NSM;
+const $ = id => document.getElementById(id);
+const F = { modo: '', revelado: false, datos: null, animando: false };
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre'];
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+setInterval(() => { $('reloj').textContent = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }); }, 1000);
+document.addEventListener('fullscreenchange', () => { $('btnPantalla').style.display = document.fullscreenElement ? 'none' : ''; });
+function pantallaCompleta() { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {}); }
+
+function fechaLarga(iso) {
+  const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return '';
+  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  return DIAS[d.getDay()] + ' ' + (+m[3]) + ' de ' + MESES[+m[2] - 1];
+}
+
+async function ciclo() {
+  try {
+    const d = await api('publico', { simbolos: false }, 2);
+    $('error').textContent = '';
+    F.datos = d;
+    $('tInst').textContent = d.institucion; $('tElec').textContent = d.eleccion;
+    if (d.logo) { $('logo').src = d.logo; $('logo').style.display = ''; }
+    $('cinta').style.display = d.modoPrueba ? '' : 'none';
+    if (d.publicado) {
+      if (!F.revelado && !F.animando) await revelar();
+    } else {
+      if (F.revelado) { F.revelado = false; $('confeti').getContext('2d').clearRect(0, 0, 9999, 9999); document.querySelectorAll('.ganadora').forEach(x => x.remove()); }
+      if (d.estado === 'ABIERTA') pintarParticipacion(d, true);
+      else if (d.estado === 'CERRADA') pintarParticipacion(d, false);
+      else pintarEspera(d);
+    }
+  } catch (e) {
+    $('error').textContent = '⚠ ' + e.message + ' (reintentando…)';
+  }
+  setTimeout(ciclo, 5000);
+}
+
+function pintarEspera(d) {
+  if (F.modo === 'espera') return;
+  F.modo = 'espera';
+  $('escena').innerHTML = `<div class="centro"><p class="sub" style="letter-spacing:.2em">ELECCIONES ESCOLARES</p>
+    <h1 class="grande">Elige a tu<br><span style="color:var(--oro)">Alcaldesa Escolar 2027</span></h1>
+    <p class="sub">${esc(fechaLarga(d.fecha))}${d.horaApertura ? ' · desde las ' + esc(d.horaApertura) : ''}</p>
+    <p class="sub" style="font-size:1.4em">Vota con tu carnet QR · Tu voto es secreto</p></div>`;
+}
+
+function pintarParticipacion(d, abierta) {
+  const pct = d.padron ? Math.round(d.votaron * 1000 / d.padron) / 10 : 0;
+  if (F.modo !== (abierta ? 'abierta' : 'cerrada')) {
+    F.modo = abierta ? 'abierta' : 'cerrada';
+    $('escena').innerHTML = `<div class="part">
+      <div class="anillo"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="12"/>
+        <circle id="arco" cx="60" cy="60" r="52" fill="none" stroke="url(#gr)" stroke-width="12" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" style="transition:stroke-dashoffset 1.2s"/>
+        <defs><linearGradient id="gr"><stop offset="0" stop-color="#f5c02a"/><stop offset="1" stop-color="#ffde7a"/></linearGradient></defs></svg>
+        <div class="val"><b id="pPct">0%</b><span id="pCuenta"></span></div></div>
+      <div class="grados"><h2>${abierta ? '<span class="punto"></span>VOTACIÓN EN CURSO' : '🔒 VOTACIÓN CERRADA'}</h2>
+        <p class="sub" style="margin:0 0 .8em">${abierta ? 'Participación de las estudiantes por grado' : 'Escrutinio en proceso… espera el Flash Electoral'}</p>
+        <div id="pGrados"></div></div></div>`;
+  }
+  $('pPct').textContent = pct + '%';
+  $('pCuenta').textContent = d.votaron.toLocaleString('es-PE') + ' de ' + d.padron.toLocaleString('es-PE') + ' votaron';
+  $('arco').style.strokeDashoffset = 326.7 * (1 - pct / 100);
+  $('pGrados').innerHTML = d.porGrado.filter(g => g.grado).map(g => {
+    const p = g.total ? Math.round(g.votaron * 1000 / g.total) / 10 : 0;
+    return `<div class="gf"><b>${g.grado}.° grado</b><div class="barra"><div style="width:${p}%"></div></div><span class="n">${p}%</span></div>`;
+  }).join('');
+}
+
+/* ---------- Revelación de resultados ---------- */
+async function revelar() {
+  F.animando = true;
+  try {
+    const d = await api('publico', { simbolos: true }, 3);
+    const r = d.resultados;
+    if (!r) { F.animando = false; return; }
+    const capa = document.createElement('div');
+    capa.className = 'capa';
+    capa.innerHTML = '<div class="flash">FLASH ELECTORAL</div><div class="sub" style="font-size:2.2em">Resultados de la elección</div>';
+    document.body.appendChild(capa);
+    await pausa(2600);
+    for (const n of [3, 2, 1]) { capa.innerHTML = `<div class="cuenta">${n}</div>`; await pausa(1000); }
+    capa.remove();
+    pintarResultados(r);
+    await pausa(300);
+    animarBarras(r);
+    await pausa(6200);
+    mostrarGanadora(r);
+    F.revelado = true;
+  } finally { F.animando = false; }
+}
+const pausa = ms => new Promise(r => setTimeout(r, ms));
+
+function simbolo(o) {
+  return o.simbolo ? `<img src="${esc(o.simbolo)}" alt="">` : `<div class="ns" style="background:${esc(o.color || '#1d4e89')}">${o.numero}</div>`;
+}
+
+function pintarResultados(r) {
+  F.modo = 'resultados';
+  const ord = r.opciones.slice().sort((a, b) => b.votos - a.votos || a.numero - b.numero);
+  let html = ord.map(o => `<div class="fila" data-n="${o.numero}"><div class="sim">${simbolo(o)}</div>
+    <div class="nom"><b>LISTA N.° ${o.numero}</b><span>${esc(o.nombre)}</span>${o.candidata ? `<small>${esc(o.candidata)}</small>` : ''}</div>
+    <div class="pista"><div></div></div><div class="num"><b data-v="${o.votos}">0</b><span data-p="${o.pctValidos}">0%</span></div></div>`).join('');
+  if (r.votoBlanco || r.blancos) html += `<div class="fila blanco" data-n="B"><div class="sim" style="background:transparent;border:3px dashed rgba(255,255,255,.35)"><div class="ns" style="font-size:.85em;line-height:1.15;color:var(--suave)">EN<br>BLANCO</div></div>
+    <div class="nom"><span>Voto en blanco</span></div><div class="pista"><div></div></div><div class="num"><b data-v="${r.blancos}">0</b><span>${r.pctBlancos}% emit.</span></div></div>`;
+  $('escena').innerHTML = `<div class="res"><div class="res-tit"><h2>RESULTADOS</h2><span>100% de votos contabilizados · % sobre votos válidos</span></div>
+    <div class="filas">${html}</div>
+    <div class="pie-res"><div>Votos emitidos: <b>${r.emitidos.toLocaleString('es-PE')}</b></div><div>Votos válidos: <b>${r.validos.toLocaleString('es-PE')}</b></div><div>Participación: <b>${r.participacion}%</b> (${r.votaron} de ${r.padron})</div></div></div>`;
+  ajustarFilas();
+}
+
+function ajustarFilas() {
+  const cont = document.querySelector('.filas');
+  if (!cont) return;
+  const filas = cont.querySelectorAll('.fila');
+  const fh = Math.max(56, Math.min(170, Math.floor((cont.clientHeight - 10 * (filas.length - 1)) / filas.length)));
+  filas.forEach(f => f.style.setProperty('--fh', fh + 'px'));
+}
+window.addEventListener('resize', ajustarFilas);
+
+function animarBarras(r) {
+  const max = Math.max(1, ...r.opciones.map(o => o.votos), r.blancos || 0);
+  document.querySelectorAll('.fila').forEach(f => {
+    const b = f.querySelector('.num b');
+    const v = +b.dataset.v;
+    f.querySelector('.pista div').style.width = (v / max * 100) + '%';
+    const sp = f.querySelector('.num span[data-p]');
+    const pFinal = sp ? +sp.dataset.p : 0;
+    const t0 = performance.now(), dur = 5000;
+    const paso = t => {
+      const k = Math.min(1, (t - t0) / dur);
+      const e = 1 - Math.pow(1 - k, 3);
+      b.textContent = Math.round(v * e).toLocaleString('es-PE');
+      if (sp) sp.textContent = (k < 1 ? (pFinal * e).toFixed(1) : pFinal) + '%';
+      if (k < 1) requestAnimationFrame(paso);
+    };
+    requestAnimationFrame(paso);
+  });
+}
+
+function mostrarGanadora(r) {
+  if (r.ganadora === null && !r.empate.length) return;
+  const caja = document.createElement('div');
+  caja.className = 'ganadora';
+  if (r.ganadora !== null) {
+    const g = r.opciones.find(o => o.numero === r.ganadora);
+    const fila = document.querySelector(`.fila[data-n="${g.numero}"]`);
+    if (fila) fila.classList.add('gana');
+    caja.innerHTML = `<div class="caja"><div class="et">🏆 LISTA GANADORA</div><div class="sim">${simbolo(g)}</div>
+      <div class="nom">LISTA N.° ${g.numero} – ${esc(g.nombre)}</div>
+      ${g.candidata ? `<div class="cand"><small>ALCALDESA ESCOLAR 2027</small>${esc(g.candidata)}</div>` : ''}
+      <div class="votos">${g.votos.toLocaleString('es-PE')} votos · ${g.pctValidos}% de los votos válidos</div></div>`;
+    confeti();
+  } else {
+    caja.innerHTML = `<div class="caja"><div class="et">⚖️ EMPATE</div><div class="nom" style="margin-top:.4em">Listas N.° ${r.empate.join(' y ')}</div>
+      <div class="cand">El Comité Electoral resolverá según el reglamento.</div></div>`;
+  }
+  caja.addEventListener('click', () => caja.remove());
+  document.body.appendChild(caja);
+  setTimeout(() => { caja.style.transition = 'opacity 1s'; caja.style.opacity = '0'; setTimeout(() => caja.remove(), 1000); }, 20000);
+}
+
+function confeti() {
+  const cv = $('confeti'), cx = cv.getContext('2d');
+  cv.width = innerWidth; cv.height = innerHeight;
+  const colores = ['#f5c02a', '#ffde7a', '#ffffff', '#6fb0ff', '#ff6b6b', '#2fd36f'];
+  const ps = Array.from({ length: 260 }, () => ({ x: Math.random() * cv.width, y: -20 - Math.random() * cv.height, w: 6 + Math.random() * 8, h: 10 + Math.random() * 10, vy: 2 + Math.random() * 4, vx: -1.5 + Math.random() * 3, r: Math.random() * 6, vr: -.15 + Math.random() * .3, c: colores[Math.floor(Math.random() * colores.length)] }));
+  const t0 = performance.now();
+  const paso = t => {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    ps.forEach(p => { p.y += p.vy; p.x += p.vx; p.r += p.vr; if (p.y > cv.height + 20 && t - t0 < 9000) { p.y = -20; p.x = Math.random() * cv.width; } cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); cx.restore(); });
+    if (t - t0 < 14000) requestAnimationFrame(paso); else cx.clearRect(0, 0, cv.width, cv.height);
+  };
+  requestAnimationFrame(paso);
+}
+
+ciclo();
+</script>
+</body>
+</html>

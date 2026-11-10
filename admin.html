@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f2b55%22/%3E%3Ctext x=%2250%22 y=%2272%22 font-size=%2266%22 text-anchor=%22middle%22 fill=%22%23f2b705%22%3E✓%3C/text%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f2b55">
+<title>Panel del Comité Electoral · Elecciones NSM 2027</title>
+<link rel="stylesheet" href="estilos.css">
+<style>
+  .tabs { display: flex; gap: 4px; background: #fff; padding: 0 12px; border-bottom: 1px solid var(--borde); overflow-x: auto; position: sticky; top: 56px; z-index: 15; }
+  .tabs button { border: 0; background: none; padding: 14px 16px; font-weight: 600; color: var(--suave); border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+  .tabs button.activa { color: var(--azul); border-bottom-color: var(--oro); }
+  main { padding: 18px; max-width: 1280px; margin: 0 auto; }
+  .seccion { display: none; }
+  .seccion.activa { display: block; }
+  h2.tit { margin: 0 0 14px; color: var(--azul); font-size: 1.3rem; }
+  h3 { margin: 0 0 12px; color: var(--azul); font-size: 1.05rem; }
+  .fila { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 16px; }
+  .kpis { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 16px; }
+  .kpi { background: #fff; border-radius: var(--radio); box-shadow: var(--sombra); padding: 16px; }
+  .kpi b { display: block; font-size: 2rem; color: var(--azul); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .kpi span { color: var(--suave); font-size: .85rem; }
+  .kpi.ok b { color: var(--ok); } .kpi.mal b { color: var(--error); }
+  .control { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .estado-grande { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .estado-grande .insignia { font-size: 1rem; padding: 8px 16px; }
+  .barra-prog { height: 12px; background: var(--azul-claro); border-radius: 999px; overflow: hidden; }
+  .barra-prog div { height: 100%; background: linear-gradient(90deg, var(--azul2), #3c7bc4); border-radius: 999px; transition: width .6s; }
+  .grado-fila { display: grid; grid-template-columns: 90px 1fr 140px; gap: 10px; align-items: center; margin: 10px 0; font-size: .95rem; }
+  .grado-fila .num { text-align: right; font-variant-numeric: tabular-nums; color: var(--suave); }
+  .mesas-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+  .mesa-tile { background: var(--azul-claro); border-radius: 12px; padding: 10px; text-align: center; }
+  .mesa-tile b { display: block; font-size: 1.5rem; color: var(--azul); }
+  .mesa-tile span { font-size: .78rem; color: var(--suave); }
+  .log { max-height: 320px; overflow: auto; font-size: .85rem; }
+  .log div { padding: 6px 0; border-bottom: 1px dashed var(--borde); }
+  .log b { color: var(--azul); }
+  .scroll-x { overflow-x: auto; }
+  .lista-cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .lista-card { background: #fff; border: 2px solid var(--borde); border-radius: 14px; padding: 12px; text-align: center; }
+  .lista-card .img { width: 120px; height: 120px; margin: 6px auto; }
+  .lista-card .sin-simbolo { font-size: 3rem; }
+  .lista-card .n { background: var(--azul); color: #fff; border-radius: 8px; padding: 2px 10px; font-weight: 800; display: inline-block; }
+  .lista-card .nom { font-weight: 800; color: var(--azul); margin-top: 4px; }
+  .lista-card .acc { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+  .preview-simbolo { width: 140px; height: 140px; border: 2px dashed var(--borde); border-radius: 14px; display: grid; place-items: center; color: var(--suave); font-size: .85rem; text-align: center; margin-top: 8px; overflow: hidden; background: #fff; }
+  .dos-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ganadora td { background: #fff7d6; font-weight: 700; }
+  .tabla-res .sim { width: 40px; height: 40px; }
+  .tabla-res .sim .sin-simbolo { font-size: 1.1rem; border-radius: 8px; }
+  .peligro-zona { border: 2px solid var(--error-claro); }
+  .clave-oculta { filter: blur(4px); cursor: pointer; }
+  #imprimir { display: none; }
+  @media print {
+    body > *:not(#imprimir) { display: none !important; }
+    #imprimir { display: block !important; font-family: Arial, sans-serif; color: #000; font-size: 11pt; }
+    @page { size: A4; margin: 15mm; }
+  }
+  .acta h1 { text-align: center; font-size: 15pt; margin: 0 0 2px; }
+  .acta h2 { text-align: center; font-size: 12pt; margin: 0 0 14px; font-weight: normal; }
+  .acta table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; }
+  .acta th, .acta td { border: 1px solid #000; padding: 5px 7px; font-size: 10pt; background: none; color: #000; }
+  .acta .firmas { display: grid; grid-template-columns: 1fr 1fr; gap: 46px 30px; margin-top: 50px; }
+  .acta .firmas div { border-top: 1px solid #000; text-align: center; padding-top: 4px; font-size: 9.5pt; }
+  .acta .caja { border: 2px solid #000; padding: 10px; text-align: center; font-size: 13pt; font-weight: bold; margin: 10px 0; }
+  .credenciales { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .cred { border: 1px dashed #000; padding: 12px; height: 62mm; page-break-inside: avoid; }
+  .cred h4 { margin: 0 0 4px; font-size: 13pt; }
+  .cred .u { font-size: 16pt; font-weight: bold; margin: 8px 0 2px; }
+  .cred small { font-size: 8.5pt; word-break: break-all; }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<section id="pLogin" class="login-fondo oculto">
+  <form class="tarjeta login-caja" id="fLogin" autocomplete="off">
+    <div class="marca"><div class="urna">✓</div><div><h1>Panel del Comité Electoral</h1><p class="sub">Elección del Municipio Escolar 2027 · NSM</p></div></div>
+    <label for="lUsuario">Usuario</label>
+    <input id="lUsuario" type="text" required>
+    <label for="lClave">Clave</label>
+    <input id="lClave" type="password" required>
+    <div id="lError" class="aviso error oculto"></div>
+    <button class="btn grande" type="submit" id="lBtn">Ingresar</button>
+  </form>
+</section>
+
+<!-- ============ PANEL ============ -->
+<section id="pApp" class="oculto">
+  <div class="barra">
+    <div class="titulo" id="tEleccion">Panel del Comité Electoral<small id="tUsuario"></small></div>
+    <a class="btn oro chico" href="flash.html" target="_blank">📺 Flash Electoral</a>
+    <a class="btn sec chico" href="index.html" target="_blank">🗳️ Mesa</a>
+    <button class="btn sec chico" onclick="salir()">Salir</button>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="resumen" class="activa">📊 Resumen</button>
+    <button data-tab="listas" data-super>🏷️ Listas</button>
+    <button data-tab="padron">📋 Padrón</button>
+    <button data-tab="resultados">🏆 Resultados</button>
+    <button data-tab="usuarios" data-super>👥 Usuarios</button>
+    <button data-tab="config" data-super>⚙️ Configuración</button>
+  </nav>
+  <main>
+
+    <!-- RESUMEN -->
+    <div class="seccion activa" id="s-resumen">
+      <div class="tarjeta" style="margin-bottom:16px">
+        <div class="estado-grande">
+          <span>Estado de la votación:</span>
+          <span id="rEstado" class="insignia"></span>
+          <span id="rPrueba" class="insignia prueba oculto">MODO PRUEBA (SIMULACRO)</span>
+          <span id="rHorario" style="color:var(--suave);font-size:.9rem"></span>
+        </div>
+        <div class="control">
+          <button class="btn ok" id="bAbrir" onclick="cambiarEstado('ABIERTA')">▶ Abrir votación</button>
+          <button class="btn peligro" id="bCerrar" onclick="cambiarEstado('CERRADA')">■ Cerrar votación</button>
+          <button class="btn sec" onclick="actaApertura()">🖨️ Acta de apertura</button>
+          <button class="btn oro" id="bFlash" onclick="publicar('SI')">📺 Lanzar Flash Electoral</button>
+          <button class="btn sec" id="bOcultar" onclick="publicar('NO')">Ocultar resultados del Flash</button>
+        </div>
+        <div id="rAviso"></div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><b id="kPadron">0</b><span>estudiantes en el padrón</span></div>
+        <div class="kpi"><b id="kVotaron">0</b><span>ya votaron</span></div>
+        <div class="kpi"><b id="kFaltan">0</b><span>faltan votar</span></div>
+        <div class="kpi"><b id="kPct">0 %</b><span>participación</span></div>
+        <div class="kpi" id="kControlCaja"><b id="kControl">✔</b><span id="kControlTxt">votos en urna = votantes</span></div>
+      </div>
+      <div class="fila">
+        <div class="tarjeta"><h3>Participación por grado</h3><div id="rGrados"></div></div>
+        <div class="tarjeta"><h3>Votos por mesa</h3><div class="mesas-tiles" id="rMesas"></div></div>
+      </div>
+      <div class="fila">
+        <div class="tarjeta"><h3>Participación por sección</h3><div class="scroll-x" style="max-height:420px;overflow:auto"><table><thead><tr><th>Grado</th><th>Sección</th><th class="num">Votaron</th><th class="num">Total</th><th style="width:35%">Avance</th></tr></thead><tbody id="rSecciones"></tbody></table></div></div>
+        <div class="tarjeta"><h3>Actividad reciente</h3><div class="log" id="rLog"></div></div>
+      </div>
+      <p style="color:var(--suave);font-size:.85rem">Se actualiza automáticamente cada 10 segundos. Última actualización: <span id="rHora">—</span></p>
+    </div>
+
+    <!-- LISTAS -->
+    <div class="seccion" id="s-listas">
+      <h2 class="tit">Listas participantes</h2>
+      <div id="lBloqueo" class="aviso alerta oculto">Las listas solo se pueden modificar con la votación en PREPARACIÓN y la urna en cero.</div>
+      <div class="fila" style="grid-template-columns:minmax(280px,380px) 1fr">
+        <form class="tarjeta" id="fLista" autocomplete="off">
+          <h3 id="flTitulo">Registrar lista</h3>
+          <div class="dos-col">
+            <div><label for="flNumero">N.° de lista</label><input id="flNumero" type="number" min="1" max="99" required></div>
+            <div><label for="flColor">Color</label><input id="flColor" type="color" value="#1d4e89" style="height:48px;padding:4px"></div>
+          </div>
+          <label for="flNombre">Nombre de la lista</label>
+          <input id="flNombre" type="text" required placeholder="Ej.: Mercedarias Unidas">
+          <label for="flCandidata">Candidata a alcaldesa (opcional)</label>
+          <input id="flCandidata" type="text" placeholder="Nombre de la candidata">
+          <label>Símbolo de la lista</label>
+          <input id="flArchivo" type="file" accept="image/*">
+          <div style="display:flex;gap:12px;align-items:end">
+            <div class="preview-simbolo" id="flPreview">Sin símbolo</div>
+            <button class="btn sec chico" type="button" onclick="quitarSimbolo()">Quitar</button>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:18px">
+            <button class="btn sec" type="button" onclick="limpiarFormLista()">Nuevo</button>
+            <button class="btn" type="submit" style="flex:1" id="flGuardar">💾 Guardar lista</button>
+          </div>
+        </form>
+        <div>
+          <div class="tarjeta" style="margin-bottom:16px"><h3>Listas registradas (<span id="lCuenta">0</span>)</h3><div class="lista-cards" id="lCards"></div></div>
+          <div class="aviso info">La cédula muestra las listas en orden de número y, al final, el VOTO EN BLANCO (si está activado en Configuración). Abra <b>🗳️ Mesa</b> para ver la cédula tal como la verán las estudiantes.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PADRÓN -->
+    <div class="seccion" id="s-padron">
+      <h2 class="tit">Padrón electoral</h2>
+      <div class="fila">
+        <div class="tarjeta" data-super>
+          <h3>Importar padrón</h3>
+          <p style="margin:0;color:var(--suave);font-size:.9rem">Reemplaza todo el padrón. Columnas requeridas: <b>ID</b>, <b>APELLIDOS_NOMBRES</b> (o APELLIDOS + NOMBRES), <b>GRADO</b>, <b>SECCION</b>, <b>DNI</b>. Si existe ESTADO, se excluyen las retiradas o trasladadas.</p>
+          <label for="pArchivo">Opción 1: archivo Excel o CSV</label>
+          <input id="pArchivo" type="file" accept=".xlsx,.xls,.csv">
+          <label for="pHojaUrl">Opción 2: enlace de la hoja de Google (base del sistema de asistencia)</label>
+          <input id="pHojaUrl" type="text" placeholder="https://docs.google.com/spreadsheets/d/…">
+          <div class="dos-col">
+            <div><label for="pHojaNombre">Pestaña</label><input id="pHojaNombre" type="text" value="ESTUDIANTES"></div>
+            <div style="display:flex;align-items:end"><button class="btn" type="button" style="width:100%" onclick="importarHoja()">Importar desde Google</button></div>
+          </div>
+          <div id="pResultado"></div>
+        </div>
+        <div class="tarjeta">
+          <h3>Buscar estudiante</h3>
+          <form id="fBuscar" style="display:flex;gap:8px"><input id="bQ" type="text" placeholder="ID, DNI o apellidos"><button class="btn" type="submit">Buscar</button></form>
+          <div class="scroll-x" style="margin-top:12px"><table><thead><tr><th>ID</th><th>Apellidos y nombres</th><th>Grado</th><th>Votó</th><th>Hora / Mesa</th></tr></thead><tbody id="bRes"></tbody></table></div>
+          <div style="margin-top:14px"><button class="btn sec" onclick="excelParticipacion()">⬇️ Descargar Excel de participación</button></div>
+        </div>
+      </div>
+      <div class="tarjeta" data-super>
+        <h3>Agregar estudiante al padrón</h3>
+        <form id="fAgregar" class="kpis" style="align-items:end;margin:0">
+          <div><label>ID</label><input id="aId" type="text" required></div>
+          <div style="grid-column:span 2"><label>Apellidos y nombres</label><input id="aNombre" type="text" required></div>
+          <div><label>Grado</label><select id="aGrado"><option value="1">1.°</option><option value="2">2.°</option><option value="3">3.°</option><option value="4">4.°</option><option value="5">5.°</option></select></div>
+          <div><label>Sección</label><input id="aSeccion" type="text"></div>
+          <div><label>DNI</label><input id="aDni" type="text"></div>
+          <div><button class="btn" type="submit" style="width:100%">Agregar</button></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="seccion" id="s-resultados">
+      <h2 class="tit">Resultados del escrutinio</h2>
+      <div id="resBloqueo" class="aviso info">Los resultados se muestran solo cuando la votación está CERRADA, para garantizar que nadie conozca conteos parciales.</div>
+      <div id="resContenido" class="oculto">
+        <div class="kpis">
+          <div class="kpi"><b id="xEmitidos">0</b><span>votos emitidos</span></div>
+          <div class="kpi"><b id="xValidos">0</b><span>votos válidos (a listas)</span></div>
+          <div class="kpi"><b id="xBlancos">0</b><span>votos en blanco</span></div>
+          <div class="kpi"><b id="xPart">0 %</b><span>participación</span></div>
+          <div class="kpi" id="xCuadraCaja"><b id="xCuadra">✔</b><span id="xCuadraTxt"></span></div>
+        </div>
+        <div id="xGanadora"></div>
+        <div class="tarjeta scroll-x"><table class="tabla-res"><thead id="xCab"></thead><tbody id="xCuerpo"></tbody></table></div>
+        <div class="control" style="margin-top:16px">
+          <button class="btn" onclick="actaEscrutinio()">🖨️ Imprimir acta de escrutinio</button>
+          <button class="btn sec" onclick="excelResultados()">⬇️ Descargar Excel de resultados</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div class="seccion" id="s-usuarios">
+      <h2 class="tit">Usuarios del sistema</h2>
+      <div class="aviso info">Las cuentas MESA01 a MESA10 son para las miembros de mesa (2 por grado). Las cuentas COMITE son para el Comité Electoral y sirven para operar las tablets de reserva.</div>
+      <div class="control" style="margin-bottom:12px"><button class="btn" onclick="imprimirCredenciales()">🖨️ Imprimir credenciales</button><button class="btn sec" onclick="mostrarClaves=!mostrarClaves;cargarUsuarios()">👁️ Mostrar/ocultar claves</button></div>
+      <div class="tarjeta scroll-x"><table><thead><tr><th>Usuario</th><th>Rol</th><th>Mesa / grado</th><th>Nombre</th><th>Clave</th><th>Activo</th><th></th></tr></thead><tbody id="uCuerpo"></tbody></table></div>
+    </div>
+
+    <!-- CONFIGURACIÓN -->
+    <div class="seccion" id="s-config">
+      <h2 class="tit">Configuración de la elección</h2>
+      <div class="fila">
+        <form class="tarjeta" id="fConfig">
+          <label for="cEleccion">Título de la elección</label><input id="cEleccion" type="text">
+          <label for="cInstitucion">Institución</label><input id="cInstitucion" type="text">
+          <div class="dos-col">
+            <div><label for="cFecha">Fecha</label><input id="cFecha" type="date"></div>
+            <div><label for="cTiempo">Segundos con la cédula abierta</label><input id="cTiempo" type="number" min="20" max="300"></div>
+            <div><label for="cApertura">Hora de apertura</label><input id="cApertura" type="time"></div>
+            <div><label for="cCierre">Hora de cierre automático</label><input id="cCierre" type="time"></div>
+            <div><label for="cBlanco">Voto en blanco</label><select id="cBlanco"><option value="SI">Sí, mostrar</option><option value="NO">No</option></select></div>
+            <div><label for="cPrueba">Modo</label><select id="cPrueba"><option value="SI">PRUEBA (simulacro)</option><option value="NO">OFICIAL (controla fecha y hora)</option></select></div>
+          </div>
+          <label for="cLogo">URL del logo (opcional)</label><input id="cLogo" type="url" placeholder="https://…">
+          <button class="btn" type="submit" style="margin-top:18px;width:100%">💾 Guardar configuración</button>
+        </form>
+        <div>
+          <div class="tarjeta" style="margin-bottom:16px">
+            <h3>Modo prueba y modo oficial</h3>
+            <p style="margin:0;font-size:.95rem">En <b>modo PRUEBA</b> se puede votar en cualquier fecha y hora (simulacro). Para el día de la elección: reinicie la votación, cambie a <b>modo OFICIAL</b> y verifique la fecha y las horas. En modo oficial los votos solo se aceptan entre la hora de apertura y la de cierre, y la votación se cierra sola a la hora indicada.</p>
+          </div>
+          <div class="tarjeta peligro-zona">
+            <h3 style="color:var(--error)">Reiniciar votación (solo después de pruebas)</h3>
+            <p style="margin:0 0 10px;font-size:.95rem">Borra todos los votos de la urna, desmarca el padrón y vuelve el estado a PREPARACIÓN. Las listas, el padrón y los usuarios se conservan.</p>
+            <button class="btn peligro" onclick="reiniciar()">Reiniciar votación</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- Modal genérico -->
+<div class="modal-fondo oculto" id="mGen">
+  <form class="modal" id="mGenForm" style="text-align:left">
+    <h2 id="mGenTit"></h2>
+    <div id="mGenCuerpo"></div>
+    <div class="acciones"><button class="btn sec" type="button" id="mGenNo">Cancelar</button><button class="btn" type="submit" id="mGenSi">Aceptar</button></div>
+  </form>
+</div>
+
+<div id="imprimir"></div>
+
+<script src="config.js"></script>
+<script src="comun.js"></script>
+<script src="lib/xlsx.full.min.js"></script>
+<script>
+'use strict';
+const { api, esc, almacen, gradoTexto, toast, imagenADataURL, simboloHTML } = window.NSM;
+const CLAVE = 'nsm2027_admin';
+const $ = id => document.getElementById(id);
+const A = { token: null, usuario: null, datos: null, listas: [], res: null, tab: 'resumen', timer: null, simbolo: '', editando: null };
+let mostrarClaves = false;
+const esSuper = () => A.usuario && A.usuario.rol === 'SUPERADMIN';
+const fmt = n => Number(n || 0).toLocaleString('es-PE');
+const pct = (a, b) => b ? Math.round(a * 1000 / b) / 10 : 0;
+
+/* ---------- Modal genérico ---------- */
+function dialogo(titulo, html, textoSi, peligro) {
+  return new Promise(resolve => {
+    $('mGenTit').textContent = titulo;
+    $('mGenCuerpo').innerHTML = html;
+    $('mGenSi').textContent = textoSi || 'Aceptar';
+    $('mGenSi').className = 'btn' + (peligro ? ' peligro' : '');
+    $('mGen').classList.remove('oculto');
+    const fin = v => { $('mGen').classList.add('oculto'); $('mGenForm').onsubmit = null; $('mGenNo').onclick = null; resolve(v); };
+    $('mGenForm').onsubmit = ev => {
+      ev.preventDefault();
+      const vals = {};
+      $('mGenCuerpo').querySelectorAll('input,select').forEach(i => { vals[i.name] = i.value; });
+      fin(vals);
+    };
+    $('mGenNo').onclick = () => fin(null);
+    const pri = $('mGenCuerpo').querySelector('input');
+    if (pri) setTimeout(() => pri.focus(), 50);
+  });
+}
+
+/* ---------- Sesión ---------- */
+window.addEventListener('load', async () => {
+  const s = almacen.get(CLAVE);
+  if (s && s.token) {
+    A.token = s.token; A.usuario = s.usuario;
+    try { await entrar(); return; } catch (e) { almacen.del(CLAVE); }
+  }
+  $('pLogin').classList.remove('oculto');
+});
+
+$('fLogin').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  $('lError').classList.add('oculto');
+  $('lBtn').disabled = true;
+  try {
+    const r = await api('login', { usuario: $('lUsuario').value, clave: $('lClave').value });
+    if (r.usuario.rol === 'MESA') throw new Error('Las cuentas de mesa ingresan por la página de la Mesa de votación.');
+    A.token = r.token; A.usuario = r.usuario;
+    almacen.set(CLAVE, { token: A.token, usuario: A.usuario });
+    await entrar();
+  } catch (e) {
+    $('lError').textContent = e.message; $('lError').classList.remove('oculto');
+  } finally { $('lBtn').disabled = false; }
+});
+
+async function entrar() {
+  await cargarResumen();
+  $('pLogin').classList.add('oculto');
+  $('pApp').classList.remove('oculto');
+  $('tUsuario').textContent = A.usuario.nombre + ' · ' + A.usuario.rol;
+  document.querySelectorAll('[data-super]').forEach(el => el.classList.toggle('oculto', !esSuper()));
+  clearInterval(A.timer);
+  A.timer = setInterval(() => { if (A.tab === 'resumen' && !document.hidden) cargarResumen().catch(manejarError); }, 10000);
+}
+
+function salir() { almacen.del(CLAVE); location.reload(); }
+function manejarError(e) {
+  if (e.codigo === 'SESION') { toast('Sesión vencida. Ingrese nuevamente.', 'error'); setTimeout(salir, 1200); return; }
+  toast(e.message, 'error');
+}
+
+/* ---------- Pestañas ---------- */
+$('tabs').addEventListener('click', ev => {
+  const b = ev.target.closest('button[data-tab]');
+  if (!b) return;
+  A.tab = b.dataset.tab;
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('activa', x === b));
+  document.querySelectorAll('.seccion').forEach(s => s.classList.toggle('activa', s.id === 's-' + A.tab));
+  ({ resumen: cargarResumen, listas: cargarListas, padron: async () => {}, resultados: cargarResultados, usuarios: cargarUsuarios, config: cargarConfig })[A.tab]().catch(manejarError);
+});
+
+/* ---------- Resumen ---------- */
+async function cargarResumen() {
+  const d = await api('estadoAdmin', { token: A.token });
+  A.datos = d;
+  $('tEleccion').firstChild.textContent = d.config.ELECCION + ' ';
+  const e = d.estado;
+  $('rEstado').textContent = e === 'PREPARACION' ? 'EN PREPARACIÓN' : e;
+  $('rEstado').className = 'insignia ' + e.toLowerCase();
+  $('rPrueba').classList.toggle('oculto', !d.modoPrueba);
+  $('rHorario').textContent = d.modoPrueba ? '' : `${d.config.FECHA} · ${d.config.HORA_APERTURA} a ${d.config.HORA_CIERRE} · ${d.horario.msg}`;
+  $('bAbrir').textContent = e === 'CERRADA' ? '▶ Reabrir votación' : '▶ Abrir votación';
+  $('bAbrir').classList.toggle('oculto', e === 'ABIERTA' || (e === 'CERRADA' && d.publicado));
+  $('bCerrar').classList.toggle('oculto', e !== 'ABIERTA');
+  $('bFlash').classList.toggle('oculto', e !== 'CERRADA' || d.publicado);
+  $('bOcultar').classList.toggle('oculto', !d.publicado);
+  const avisos = [];
+  if (!d.listas.length) avisos.push('<div class="aviso alerta">Aún no hay listas registradas.</div>');
+  if (!d.padron) avisos.push('<div class="aviso alerta">El padrón electoral está vacío. Impórtelo en la pestaña Padrón.</div>');
+  if (d.publicado) avisos.push('<div class="aviso ok">📺 El Flash Electoral está mostrando los resultados.</div>');
+  $('rAviso').innerHTML = avisos.join('');
+  $('kPadron').textContent = fmt(d.padron);
+  $('kVotaron').textContent = fmt(d.votaron);
+  $('kFaltan').textContent = fmt(d.padron - d.votaron);
+  $('kPct').textContent = pct(d.votaron, d.padron) + ' %';
+  const cuadra = d.urnaTotal === d.votaron;
+  $('kControl').textContent = cuadra ? '✔ ' + fmt(d.urnaTotal) : '⚠ ' + fmt(d.urnaTotal);
+  $('kControlTxt').textContent = cuadra ? 'votos en urna = votantes' : 'votos en urna ≠ votantes (' + d.votaron + ')';
+  $('kControlCaja').className = 'kpi ' + (cuadra ? 'ok' : 'mal');
+  $('rGrados').innerHTML = d.porGrado.map(g => `
+    <div class="grado-fila"><b>${g.grado ? g.grado + '.° grado' : 'Sin grado'}</b>
+    <div class="barra-prog"><div style="width:${pct(g.votaron, g.total)}%"></div></div>
+    <span class="num">${fmt(g.votaron)} / ${fmt(g.total)} · ${pct(g.votaron, g.total)}%</span></div>`).join('') || '<p style="color:var(--suave)">Sin datos</p>';
+  $('rMesas').innerHTML = d.mesas.map(m => `<div class="mesa-tile"><span>${esc(m.mesa)}</span><b>${fmt(d.porMesa[m.mesa] || 0)}</b><span>${gradoTexto(m.grado)}</span></div>`).join('');
+  $('rSecciones').innerHTML = d.porSeccion.map(s => `<tr><td>${s.grado ? s.grado + '.°' : '—'}</td><td>${esc(s.seccion || '—')}</td><td class="num">${s.votaron}</td><td class="num">${s.total}</td><td><div class="barra-prog"><div style="width:${pct(s.votaron, s.total)}%"></div></div></td></tr>`).join('');
+  $('rLog').innerHTML = d.log.map(l => `<div><span style="color:var(--suave)">${esc(l.fecha.slice(11))}</span> · <b>${esc(l.accion)}</b> · ${esc(l.usuario)} ${l.detalle ? '· ' + esc(l.detalle) : ''}</div>`).join('') || '<p>Sin actividad.</p>';
+  $('rHora').textContent = new Date().toLocaleTimeString('es-PE');
+}
+
+async function cambiarEstado(nuevo) {
+  const d = A.datos;
+  const msg = nuevo === 'ABIERTA'
+    ? `<p>Se habilitarán las ${d.mesas.length} mesas para recibir votos.</p><p><b>Padrón:</b> ${fmt(d.padron)} estudiantes · <b>Listas:</b> ${d.listas.length}${d.modoPrueba ? '<br><b style="color:#5b2bb5">Modo PRUEBA (simulacro)</b>' : ''}</p>`
+    : `<p>Las mesas dejarán de aceptar votos y se generará el conteo final.</p><p><b>Votaron:</b> ${fmt(d.votaron)} de ${fmt(d.padron)}</p>`;
+  const ok = await dialogo(nuevo === 'ABIERTA' ? '¿Abrir la votación?' : '¿Cerrar la votación?', msg, nuevo === 'ABIERTA' ? 'Sí, abrir' : 'Sí, cerrar', nuevo !== 'ABIERTA');
+  if (!ok) return;
+  try { await api('cambiarEstado', { token: A.token, nuevo }); toast(nuevo === 'ABIERTA' ? 'Votación ABIERTA' : 'Votación CERRADA', 'ok'); await cargarResumen(); }
+  catch (e) { manejarError(e); }
+}
+
+async function publicar(valor) {
+  const ok = await dialogo(valor === 'SI' ? '¿Lanzar el Flash Electoral?' : '¿Ocultar los resultados?',
+    valor === 'SI' ? '<p>La pantalla del patio (flash.html) mostrará los resultados con animación en unos segundos.</p>' : '<p>La pantalla del Flash volverá a mostrar "Escrutinio en proceso".</p>',
+    valor === 'SI' ? '📺 Lanzar' : 'Ocultar');
+  if (!ok) return;
+  try { await api('publicar', { token: A.token, valor }); toast(valor === 'SI' ? 'Flash Electoral lanzado' : 'Resultados ocultos', 'ok'); await cargarResumen(); }
+  catch (e) { manejarError(e); }
+}
+
+/* ---------- Listas ---------- */
+async function cargarListas() {
+  const d = await api('estadoAdmin', { token: A.token, simbolos: true });
+  A.datos = d; A.listas = d.listas;
+  const bloqueado = d.estado !== 'PREPARACION' || d.votaron > 0 || d.urnaTotal > 0;
+  $('lBloqueo').classList.toggle('oculto', !bloqueado);
+  $('fLista').querySelectorAll('input,button').forEach(el => { el.disabled = bloqueado; });
+  $('lCuenta').textContent = d.listas.length;
+  $('lCards').innerHTML = d.listas.map(l => `
+    <div class="lista-card" style="border-color:${esc(l.color || '#d7dde7')}">
+      <span class="n">N.° ${l.numero}</span>
+      <div class="img">${simboloHTML(l)}</div>
+      <div class="nom">${esc(l.nombre)}</div>
+      <div style="color:var(--suave);font-size:.88rem">${esc(l.candidata || '')}</div>
+      <div class="acc">${bloqueado ? '' : `<button class="btn sec chico" onclick="editarLista(${l.numero})">Editar</button><button class="btn peligro chico" onclick="eliminarLista(${l.numero})">Eliminar</button>`}</div>
+    </div>`).join('') || '<p style="color:var(--suave)">Aún no hay listas. Registre la primera con el formulario.</p>';
+}
+
+function pintarPreview() {
+  $('flPreview').innerHTML = A.simbolo ? `<img src="${esc(A.simbolo)}" style="width:100%;height:100%;object-fit:contain">` : 'Sin símbolo';
+}
+function quitarSimbolo() { A.simbolo = ''; $('flArchivo').value = ''; pintarPreview(); }
+function limpiarFormLista() {
+  A.editando = null; A.simbolo = '';
+  $('fLista').reset(); $('flColor').value = '#1d4e89';
+  $('flTitulo').textContent = 'Registrar lista';
+  const usados = A.listas.map(l => l.numero);
+  let n = 1; while (usados.includes(n)) n++;
+  $('flNumero').value = n;
+  pintarPreview();
+}
+function editarLista(n) {
+  const l = A.listas.find(x => x.numero === n);
+  A.editando = n; A.simbolo = l.simbolo || '';
+  $('flNumero').value = l.numero; $('flNombre').value = l.nombre; $('flCandidata').value = l.candidata || '';
+  $('flColor').value = /^#[0-9a-f]{6}$/i.test(l.color) ? l.color : '#1d4e89';
+  $('flTitulo').textContent = 'Editar lista N.° ' + n;
+  pintarPreview();
+  $('fLista').scrollIntoView({ behavior: 'smooth' });
+}
+$('flArchivo').addEventListener('change', async () => {
+  const f = $('flArchivo').files[0];
+  if (!f) return;
+  try { A.simbolo = await imagenADataURL(f); pintarPreview(); }
+  catch (e) { toast(e.message, 'error'); }
+});
+$('fLista').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  $('flGuardar').disabled = true;
+  try {
+    const lista = { numero: $('flNumero').value, nombre: $('flNombre').value, candidata: $('flCandidata').value, color: $('flColor').value, simbolo: A.simbolo, numeroAnterior: A.editando };
+    await api('guardarLista', { token: A.token, lista });
+    toast('Lista N.° ' + lista.numero + ' guardada', 'ok');
+    await cargarListas();
+    limpiarFormLista();
+  } catch (e) { manejarError(e); }
+  finally { $('flGuardar').disabled = false; }
+});
+async function eliminarLista(n) {
+  const ok = await dialogo('¿Eliminar la lista N.° ' + n + '?', '<p>Esta acción no se puede deshacer.</p>', 'Eliminar', true);
+  if (!ok) return;
+  try { await api('eliminarLista', { token: A.token, numero: n }); toast('Lista eliminada', 'ok'); await cargarListas(); limpiarFormLista(); }
+  catch (e) { manejarError(e); }
+}
+
+/* ---------- Padrón ---------- */
+function resultadoImport(r) {
+  $('pResultado').innerHTML = `<div class="aviso ok"><b>${fmt(r.importadas)} estudiantes importadas.</b>
+    ${r.excluidas ? '<br>Excluidas por estado (retiradas/trasladadas): ' + r.excluidas : ''}
+    ${r.duplicados.length ? '<br>IDs duplicados omitidos: ' + esc(r.duplicados.slice(0, 20).join(', ')) + (r.duplicados.length > 20 ? '…' : '') : ''}
+    ${r.sinGrado ? '<br><span style="color:var(--error)">Sin grado reconocido: ' + r.sinGrado + ' (podrán votar en cualquier mesa)</span>' : ''}
+    ${r.columnas.dni < 0 ? '<br><span style="color:var(--aviso)">No se encontró la columna DNI: la opción "sin carnet" no funcionará.</span>' : ''}</div>`;
+  toast('Padrón importado', 'ok');
+}
+async function confirmarReemplazo() {
+  return dialogo('¿Reemplazar el padrón?', '<p>Se borrará el padrón actual y se cargará el nuevo.</p>', 'Sí, importar');
+}
+$('pArchivo').addEventListener('change', async () => {
+  const f = $('pArchivo').files[0];
+  if (!f) return;
+  if (!(await confirmarReemplazo())) { $('pArchivo').value = ''; return; }
+  $('pResultado').innerHTML = '<div class="girando" style="margin:14px auto"></div>';
+  try {
+    const buf = await f.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const nombre = wb.SheetNames.find(n => /estud|padr|alumn|nomin/i.test(n)) || wb.SheetNames[0];
+    const tabla = XLSX.utils.sheet_to_json(wb.Sheets[nombre], { header: 1, raw: false, defval: '' });
+    const r = await api('importarTabla', { token: A.token, tabla });
+    resultadoImport(r);
+  } catch (e) { $('pResultado').innerHTML = ''; manejarError(e); }
+  finally { $('pArchivo').value = ''; }
+});
+async function importarHoja() {
+  if (!$('pHojaUrl').value.trim()) return toast('Pegue el enlace de la hoja de Google', 'error');
+  if (!(await confirmarReemplazo())) return;
+  $('pResultado').innerHTML = '<div class="girando" style="margin:14px auto"></div>';
+  try { resultadoImport(await api('importarDesdeHoja', { token: A.token, sheetId: $('pHojaUrl').value, hoja: $('pHojaNombre').value })); }
+  catch (e) { $('pResultado').innerHTML = ''; manejarError(e); }
+}
+$('fBuscar').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  try {
+    const r = await api('buscarPadron', { token: A.token, q: $('bQ').value });
+    $('bRes').innerHTML = r.resultados.map(a => `<tr><td>${esc(a.id)}</td><td>${esc(a.nombre)}</td><td>${a.grado || '—'}.° ${esc(a.seccion)}</td><td>${a.voto ? '<b style="color:var(--ok)">SÍ</b>' : 'NO'}</td><td>${a.voto ? esc(a.hora) + ' · ' + esc(a.mesa) + (a.modo === 'MANUAL' ? ' (sin carnet)' : '') : ''}</td></tr>`).join('') || '<tr><td colspan="5">Sin resultados</td></tr>';
+  } catch (e) { manejarError(e); }
+});
+$('fAgregar').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  try {
+    await api('agregarAlumna', { token: A.token, alumna: { id: $('aId').value, nombre: $('aNombre').value, grado: $('aGrado').value, seccion: $('aSeccion').value, dni: $('aDni').value } });
+    toast('Estudiante agregada al padrón', 'ok');
+    $('fAgregar').reset();
+  } catch (e) { manejarError(e); }
+});
+async function excelParticipacion() {
+  try {
+    const r = await api('listaVotantes', { token: A.token });
+    const d = A.datos || await api('estadoAdmin', { token: A.token });
+    const wb = XLSX.utils.book_new();
+    const h1 = XLSX.utils.aoa_to_sheet([['ID', 'APELLIDOS Y NOMBRES', 'GRADO', 'SECCIÓN', 'VOTÓ', 'HORA', 'MESA', 'MODO']].concat(r.filas));
+    h1['!cols'] = [{ wch: 8 }, { wch: 40 }, { wch: 7 }, { wch: 8 }, { wch: 6 }, { wch: 10 }, { wch: 9 }, { wch: 9 }];
+    XLSX.utils.book_append_sheet(wb, h1, 'Padrón');
+    const h2 = XLSX.utils.aoa_to_sheet([['GRADO', 'SECCIÓN', 'VOTARON', 'TOTAL', '% PARTICIPACIÓN']].concat(d.porSeccion.map(s => [s.grado, s.seccion, s.votaron, s.total, pct(s.votaron, s.total)])));
+    XLSX.utils.book_append_sheet(wb, h2, 'Por sección');
+    XLSX.writeFile(wb, 'Participacion_Elecciones_NSM_2027.xlsx');
+  } catch (e) { manejarError(e); }
+}
+
+/* ---------- Resultados ---------- */
+async function cargarResultados() {
+  const d = await api('estadoAdmin', { token: A.token });
+  A.datos = d;
+  if (d.estado !== 'CERRADA') { $('resBloqueo').classList.remove('oculto'); $('resContenido').classList.add('oculto'); return; }
+  const r = (await api('resultados', { token: A.token, simbolos: true })).resultados;
+  A.res = r;
+  $('resBloqueo').classList.add('oculto'); $('resContenido').classList.remove('oculto');
+  $('xEmitidos').textContent = fmt(r.emitidos); $('xValidos').textContent = fmt(r.validos);
+  $('xBlancos').textContent = fmt(r.blancos); $('xPart').textContent = r.participacion + ' %';
+  $('xCuadra').textContent = r.cuadra ? '✔' : '⚠';
+  $('xCuadraTxt').textContent = r.cuadra ? 'emitidos = estudiantes que votaron' : 'emitidos (' + r.emitidos + ') ≠ votaron (' + r.votaron + ')';
+  $('xCuadraCaja').className = 'kpi ' + (r.cuadra ? 'ok' : 'mal');
+  const g = r.opciones.find(o => o.numero === r.ganadora);
+  $('xGanadora').innerHTML = g ? `<div class="aviso ok" style="font-size:1.1rem">🏆 <b>Lista ganadora: N.° ${g.numero} – ${esc(g.nombre)}</b> con ${fmt(g.votos)} votos (${g.pctValidos}% de los votos válidos)</div>`
+    : r.empate.length ? `<div class="aviso alerta" style="font-size:1.1rem">⚖️ <b>EMPATE</b> entre las listas N.° ${r.empate.join(', ')}. El Comité Electoral debe resolver según el reglamento.</div>` : '';
+  $('xCab').innerHTML = `<tr><th>N.°</th><th></th><th>Lista</th>${r.mesas.map(m => `<th class="num">${esc(m.replace('MESA', 'M'))}</th>`).join('')}<th class="num">TOTAL</th><th class="num">% válidos</th><th class="num">% emitidos</th></tr>`;
+  const ordenadas = r.opciones.slice().sort((a, b) => b.votos - a.votos || a.numero - b.numero);
+  let filas = ordenadas.map(o => `<tr class="${o.numero === r.ganadora ? 'ganadora' : ''}"><td>${o.numero}</td><td><div class="sim">${simboloHTML(o)}</div></td><td>${esc(o.nombre)}${o.candidata ? '<br><small>' + esc(o.candidata) + '</small>' : ''}</td>${r.mesas.map(m => `<td class="num">${o.porMesa[m] || 0}</td>`).join('')}<td class="num"><b>${fmt(o.votos)}</b></td><td class="num">${o.pctValidos}%</td><td class="num">${o.pctEmitidos}%</td></tr>`).join('');
+  if (r.votoBlanco || r.blancos) filas += `<tr><td></td><td></td><td>VOTO EN BLANCO</td>${r.mesas.map(m => `<td class="num">${r.blancosPorMesa[m] || 0}</td>`).join('')}<td class="num"><b>${fmt(r.blancos)}</b></td><td class="num">—</td><td class="num">${r.pctBlancos}%</td></tr>`;
+  filas += `<tr><th></th><th></th><th>TOTAL EMITIDOS</th>${r.mesas.map(m => `<th class="num">${r.porMesaVotantes[m] || 0}</th>`).join('')}<th class="num">${fmt(r.emitidos)}</th><th></th><th class="num">100%</th></tr>`;
+  $('xCuerpo').innerHTML = filas;
+}
+
+function excelResultados() {
+  const r = A.res; if (!r) return;
+  const filas = [['N.°', 'LISTA', 'CANDIDATA'].concat(r.mesas).concat(['TOTAL', '% VÁLIDOS', '% EMITIDOS'])];
+  r.opciones.forEach(o => filas.push([o.numero, o.nombre, o.candidata].concat(r.mesas.map(m => o.porMesa[m] || 0)).concat([o.votos, o.pctValidos, o.pctEmitidos])));
+  filas.push(['', 'VOTO EN BLANCO', ''].concat(r.mesas.map(m => r.blancosPorMesa[m] || 0)).concat([r.blancos, '', r.pctBlancos]));
+  filas.push(['', 'TOTAL EMITIDOS', ''].concat(r.mesas.map(m => r.porMesaVotantes[m] || 0)).concat([r.emitidos, '', 100]));
+  filas.push([]); filas.push(['', 'Padrón electoral', '', r.padron]); filas.push(['', 'Participación (%)', '', r.participacion]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(filas), 'Resultados');
+  XLSX.writeFile(wb, 'Resultados_Elecciones_NSM_2027.xlsx');
+}
+
+/* ---------- Actas ---------- */
+function cabActa(titulo) {
+  const c = A.datos.config;
+  const logo = c.LOGO_URL ? `<img src="${esc(c.LOGO_URL)}" style="height:60px;display:block;margin:0 auto 6px">` : '';
+  return `${logo}<h1>${esc(c.INSTITUCION)}</h1><h2>${esc(c.ELECCION)}</h2><h1 style="font-size:14pt;margin:10px 0">${titulo}</h1>
+    <p>Fecha y hora de emisión: <b>${new Date().toLocaleString('es-PE')}</b>${A.datos.modoPrueba ? ' &nbsp; <b>[SIMULACRO – MODO PRUEBA]</b>' : ''}</p>`;
+}
+function firmas(listas) {
+  const f = ['Presidente(a) del Comité Electoral', 'Secretario(a) del Comité Electoral', 'Vocal del Comité Electoral', 'Responsable del sistema de votación']
+    .concat(listas.map(l => 'Personera – Lista N.° ' + l.numero)).concat(['Director(a) de la I.E.']);
+  return `<div class="firmas">${f.map(x => `<div>${esc(x)}<br>Nombre: ............................................</div>`).join('')}</div>`;
+}
+function imprimir(html) { $('imprimir').innerHTML = '<div class="acta">' + html + '</div>'; setTimeout(() => window.print(), 300); }
+
+async function actaApertura() {
+  try {
+    const d = await api('estadoAdmin', { token: A.token });
+    A.datos = d;
+    imprimir(cabActa('ACTA DE APERTURA') + `
+      <p>Siendo las ________ horas, el Comité Electoral, en presencia de las personeras de lista, verifica el estado de la urna electrónica y del padrón:</p>
+      <div class="caja">VOTOS EN LA URNA ELECTRÓNICA: ${d.urnaTotal} &nbsp;|&nbsp; ESTUDIANTES QUE YA VOTARON: ${d.votaron}</div>
+      <table><tr><th>Padrón electoral</th><td>${fmt(d.padron)} estudiantes</td></tr>
+      <tr><th>Mesas habilitadas</th><td>${d.mesas.length} (${d.mesas.map(m => m.mesa + ': ' + m.grado + '.°').join(', ')})</td></tr>
+      <tr><th>Horario</th><td>${esc(d.config.FECHA)} de ${esc(d.config.HORA_APERTURA)} a ${esc(d.config.HORA_CIERRE)}</td></tr>
+      <tr><th>Voto en blanco</th><td>${d.config.VOTO_BLANCO === 'SI' ? 'Habilitado' : 'No habilitado'}</td></tr></table>
+      <h3>Listas participantes</h3>
+      <table><tr><th>N.°</th><th>Lista</th><th>Candidata a alcaldesa</th></tr>${d.listas.map(l => `<tr><td>${l.numero}</td><td>${esc(l.nombre)}</td><td>${esc(l.candidata)}</td></tr>`).join('')}</table>
+      <p>Por lo que se da inicio al proceso electoral, firmando los presentes en señal de conformidad.</p>${firmas(d.listas)}`);
+  } catch (e) { manejarError(e); }
+}
+
+function actaEscrutinio() {
+  const r = A.res; if (!r) return;
+  const g = r.opciones.find(o => o.numero === r.ganadora);
+  const ordenadas = r.opciones.slice().sort((a, b) => b.votos - a.votos || a.numero - b.numero);
+  imprimir(cabActa('ACTA DE ESCRUTINIO') + `
+    <table><tr><th>Lista</th><th>Votos</th><th>% votos válidos</th><th>% votos emitidos</th></tr>
+    ${ordenadas.map(o => `<tr><td>N.° ${o.numero} – ${esc(o.nombre)}</td><td style="text-align:right">${o.votos}</td><td style="text-align:right">${o.pctValidos}%</td><td style="text-align:right">${o.pctEmitidos}%</td></tr>`).join('')}
+    <tr><td>Votos en blanco</td><td style="text-align:right">${r.blancos}</td><td></td><td style="text-align:right">${r.pctBlancos}%</td></tr>
+    <tr><th>Total de votos emitidos</th><th style="text-align:right">${r.emitidos}</th><th></th><th style="text-align:right">100%</th></tr></table>
+    <table><tr><th>Padrón electoral</th><td>${r.padron}</td><th>Estudiantes que votaron</th><td>${r.votaron}</td></tr>
+    <tr><th>Participación</th><td>${r.participacion}%</td><th>Control urna = votantes</th><td>${r.cuadra ? 'CONFORME' : 'NO CUADRA'}</td></tr></table>
+    <h3>Votos por mesa</h3>
+    <table><tr><th>Opción</th>${r.mesas.map(m => `<th>${esc(m)}</th>`).join('')}</tr>
+    ${r.opciones.map(o => `<tr><td>Lista ${o.numero}</td>${r.mesas.map(m => `<td style="text-align:right">${o.porMesa[m] || 0}</td>`).join('')}</tr>`).join('')}
+    <tr><td>Blanco</td>${r.mesas.map(m => `<td style="text-align:right">${r.blancosPorMesa[m] || 0}</td>`).join('')}</tr></table>
+    <div class="caja">${g ? 'LISTA GANADORA: N.° ' + g.numero + ' – ' + esc(g.nombre) + (g.candidata ? '<br>Alcaldesa electa: ' + esc(g.candidata) : '') : 'EMPATE ENTRE LAS LISTAS N.° ' + r.empate.join(', ')}</div>
+    ${firmas(r.opciones)}`);
+}
+
+/* ---------- Usuarios ---------- */
+async function cargarUsuarios() {
+  const r = await api('listarUsuarios', { token: A.token });
+  A.usuarios = r.usuarios;
+  $('uCuerpo').innerHTML = r.usuarios.map(u => `<tr>
+    <td><b>${esc(u.usuario)}</b></td><td>${esc(u.rol)}</td><td>${u.rol === 'MESA' ? esc(u.mesa) + ' · ' + gradoTexto(u.grado) : '—'}</td><td>${esc(u.nombre)}</td>
+    <td><code class="${mostrarClaves ? '' : 'clave-oculta'}">${esc(u.clave)}</code></td>
+    <td>${u.activo ? '✔' : '<span style="color:var(--error)">✘</span>'}</td>
+    <td style="white-space:nowrap"><button class="btn sec chico" onclick="cambiarClave('${esc(u.usuario)}')">Cambiar clave</button>
+    ${u.rol !== 'SUPERADMIN' ? `<button class="btn sec chico" onclick="activar('${esc(u.usuario)}', ${!u.activo})">${u.activo ? 'Desactivar' : 'Activar'}</button>` : ''}</td></tr>`).join('');
+}
+async function cambiarClave(usuario) {
+  const v = await dialogo('Nueva clave para ' + usuario, '<label>Nueva clave (mínimo 4 caracteres)</label><input name="clave" type="text" required minlength="4">', 'Guardar');
+  if (!v) return;
+  try { await api('guardarUsuario', { token: A.token, usuarioDatos: { usuario, clave: v.clave } }); toast('Clave actualizada', 'ok'); cargarUsuarios(); }
+  catch (e) { manejarError(e); }
+}
+async function activar(usuario, activo) {
+  try { await api('guardarUsuario', { token: A.token, usuarioDatos: { usuario, activo } }); cargarUsuarios(); }
+  catch (e) { manejarError(e); }
+}
+function imprimirCredenciales() {
+  if (!A.usuarios) return;
+  const urlMesa = location.href.replace(/admin\.html.*$/, 'index.html');
+  const c = (A.datos && A.datos.config) || {};
+  const tarjetas = A.usuarios.filter(u => u.rol !== 'SUPERADMIN' && u.activo).map(u => `
+    <div class="cred"><h4>${esc(c.ELECCION || 'Elecciones NSM 2027')}</h4>
+    <div>${u.rol === 'MESA' ? 'Miembros de mesa · ' + gradoTexto(u.grado) : 'Comité Electoral (tablet de reserva)'}</div>
+    <div class="u">Usuario: ${esc(u.usuario)}</div><div class="u">Clave: ${esc(u.clave)}</div>
+    <small>Ingresar en: ${esc(urlMesa)}</small></div>`).join('');
+  imprimir(`<div class="credenciales">${tarjetas}</div>`);
+}
+
+/* ---------- Configuración ---------- */
+async function cargarConfig() {
+  const d = await api('estadoAdmin', { token: A.token });
+  A.datos = d;
+  const c = d.config;
+  $('cEleccion').value = c.ELECCION; $('cInstitucion').value = c.INSTITUCION; $('cFecha').value = c.FECHA;
+  $('cApertura').value = c.HORA_APERTURA; $('cCierre').value = c.HORA_CIERRE; $('cTiempo').value = c.TIEMPO_CEDULA;
+  $('cBlanco').value = c.VOTO_BLANCO; $('cPrueba').value = c.MODO_PRUEBA; $('cLogo').value = c.LOGO_URL;
+  const bloq = d.estado !== 'PREPARACION';
+  $('cBlanco').disabled = bloq; $('cPrueba').disabled = bloq;
+}
+$('fConfig').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const config = { ELECCION: $('cEleccion').value, INSTITUCION: $('cInstitucion').value, FECHA: $('cFecha').value, HORA_APERTURA: $('cApertura').value, HORA_CIERRE: $('cCierre').value, TIEMPO_CEDULA: $('cTiempo').value, LOGO_URL: $('cLogo').value };
+  if (!$('cBlanco').disabled) config.VOTO_BLANCO = $('cBlanco').value;
+  if (!$('cPrueba').disabled) config.MODO_PRUEBA = $('cPrueba').value;
+  try { await api('guardarConfig', { token: A.token, config }); toast('Configuración guardada', 'ok'); await cargarConfig(); }
+  catch (e) { manejarError(e); }
+});
+async function reiniciar() {
+  const v = await dialogo('Reiniciar votación', '<p>Se borrarán <b>todos los votos</b>. Escriba <b>REINICIAR</b> para confirmar.</p><input name="conf" type="text" required autocomplete="off">', 'Reiniciar', true);
+  if (!v) return;
+  try { await api('reiniciar', { token: A.token, confirmacion: v.conf }); toast('Votación reiniciada: urna en cero', 'ok'); await cargarConfig(); }
+  catch (e) { manejarError(e); }
+}
+</script>
+</body>
+</html>
