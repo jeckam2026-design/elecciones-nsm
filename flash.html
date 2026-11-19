@@ -102,6 +102,24 @@
 </style>
 </head>
 <body>
+<div id="compat" style="display:none;position:fixed;inset:0;z-index:9999;background:#0f2b55;color:#fff;font-family:Arial,sans-serif;padding:30px;text-align:center;font-size:20px;line-height:1.5">
+  <div style="font-size:60px">&#9888;</div>
+  <b style="font-size:26px">Este navegador es muy antiguo</b><br>
+  Abra este enlace en <b>Google Chrome actualizado</b> (Play Store &rarr; Chrome &rarr; Actualizar).<br><br>
+  <small style="opacity:.8">Datos del navegador:<br><span id="compatUA"></span></small>
+</div>
+<script>
+(function () {
+  var ok = true;
+  try { new Function('const f = async () => { await 1; }; let [a] = [1]; return `${a}`;'); } catch (e) { ok = false; }
+  if (!window.fetch || !window.Promise || !Promise.prototype['finally'] || !window.localStorage) ok = false;
+  if (!ok) {
+    document.getElementById('compat').style.display = 'block';
+    document.getElementById('compatUA').appendChild(document.createTextNode(navigator.userAgent));
+  }
+})();
+</script>
+
 <div class="cab">
   <img id="logo" alt="" style="display:none">
   <div><div class="t1" id="tInst">I.E.E. "Nuestra Señora de las Mercedes" – Ayacucho</div><div class="t2" id="tElec">Elección del Municipio Escolar 2027</div></div>
