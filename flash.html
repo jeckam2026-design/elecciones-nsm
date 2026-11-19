@@ -81,7 +81,21 @@
   .ganadora .cand { font-size: 2em; margin-top: .3em; }
   .ganadora .cand small { display: block; font-size: .6em; color: var(--suave); letter-spacing: .1em; }
   .ganadora .votos { font-size: 1.7em; color: var(--oro2); margin-top: .5em; }
+  .ganadora .caja.con-equipo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 2.4em; align-items: center; text-align: left; padding: 2em 2.6em; max-width: 94vw; width: 94vw; }
+  .ganadora .caja.con-equipo .izq { text-align: center; }
+  .ganadora .caja.con-equipo .sim { width: 13em; height: 13em; }
+  .ganadora .caja.con-equipo .nom { font-size: 2.6em; }
+  .ganadora .lema { font-size: 1.25em; color: var(--suave); margin-top: .3em; }
+  .ganadora .eq-tit { font-size: 1.5em; color: var(--oro); font-weight: 900; letter-spacing: .1em; margin-bottom: .5em; }
+  .ganadora .eq { width: 100%; border-collapse: collapse; }
+  .ganadora .eq td { padding: .45em .5em; border-bottom: 1px solid rgba(255,255,255,.12); font-size: 1.3em; vertical-align: top; }
+  .ganadora .eq td.c { color: var(--oro2); font-weight: 700; font-size: .95em; letter-spacing: .03em; width: 32%; padding-top: .7em; }
+  .ganadora .eq td:nth-child(2) { width: 56%; }
+  .ganadora .eq td.g { color: var(--suave); white-space: nowrap; text-align: right; }
+  .ganadora .eq tr.alc td { font-size: 1.6em; font-weight: 900; }
+  .ganadora .eq tr.alc td.c { font-size: .85em; }
   @keyframes aparece { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
+  .ganadora.oculta-gan { opacity: 0; pointer-events: auto; }
   #confeti { position: fixed; inset: 0; pointer-events: none; z-index: 45; }
   #btnPantalla { position: fixed; bottom: 1em; right: 1em; z-index: 50; background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.3); border-radius: .6em; padding: .6em 1em; font-size: .9em; cursor: pointer; }
   #error { position: fixed; bottom: 1em; left: 1em; color: #ffb3b3; font-size: .9em; z-index: 50; }
@@ -252,18 +266,29 @@ function mostrarGanadora(r) {
     const g = r.opciones.find(o => o.numero === r.ganadora);
     const fila = document.querySelector(`.fila[data-n="${g.numero}"]`);
     if (fila) fila.classList.add('gana');
-    caja.innerHTML = `<div class="caja"><div class="et">🏆 LISTA GANADORA</div><div class="sim">${simbolo(g)}</div>
-      <div class="nom">LISTA N.° ${g.numero} – ${esc(g.nombre)}</div>
-      ${g.candidata ? `<div class="cand"><small>ALCALDESA ESCOLAR 2027</small>${esc(g.candidata)}</div>` : ''}
-      <div class="votos">${g.votos.toLocaleString('es-PE')} votos · ${g.pctValidos}% de los votos válidos</div></div>`;
+    const eq = (g.equipo && g.equipo.integrantes) || [];
+    if (eq.length) {
+      caja.innerHTML = `<div class="caja con-equipo"><div class="izq"><div class="et">🏆 LISTA GANADORA</div><div class="sim">${simbolo(g)}</div>
+        <div class="nom">LISTA N.° ${g.numero} – ${esc(g.nombre)}</div>
+        ${g.equipo.lema ? `<div class="lema">${esc(g.equipo.lema)}</div>` : ''}
+        <div class="votos">${g.votos.toLocaleString('es-PE')} votos · ${g.pctValidos}% de los votos válidos</div></div>
+        <div><div class="eq-tit">MUNICIPIO ESCOLAR 2027</div><table class="eq">
+        ${eq.map(x => `<tr class="${/ALCALDESA/i.test(x.cargo) && !/TENIENTE/i.test(x.cargo) ? 'alc' : ''}"><td class="c">${esc(x.cargo)}</td><td>${esc(x.nombre)}</td><td class="g">${esc(x.grado)}</td></tr>`).join('')}
+        </table></div></div>`;
+    } else {
+      caja.innerHTML = `<div class="caja"><div class="et">🏆 LISTA GANADORA</div><div class="sim">${simbolo(g)}</div>
+        <div class="nom">LISTA N.° ${g.numero} – ${esc(g.nombre)}</div>
+        ${g.candidata ? `<div class="cand"><small>ALCALDESA ESCOLAR 2027</small>${esc(g.candidata)}</div>` : ''}
+        <div class="votos">${g.votos.toLocaleString('es-PE')} votos · ${g.pctValidos}% de los votos válidos</div></div>`;
+    }
     confeti();
   } else {
     caja.innerHTML = `<div class="caja"><div class="et">⚖️ EMPATE</div><div class="nom" style="margin-top:.4em">Listas N.° ${r.empate.join(' y ')}</div>
       <div class="cand">El Comité Electoral resolverá según el reglamento.</div></div>`;
   }
-  caja.addEventListener('click', () => caja.remove());
+  caja.addEventListener('click', () => caja.classList.toggle('oculta-gan'));
   document.body.appendChild(caja);
-  setTimeout(() => { caja.style.transition = 'opacity 1s'; caja.style.opacity = '0'; setTimeout(() => caja.remove(), 1000); }, 20000);
+
 }
 
 function confeti() {
