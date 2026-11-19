@@ -133,7 +133,7 @@
       </div>
       <div class="fila">
         <div class="tarjeta"><h3>Participación por grado</h3><div id="rGrados"></div></div>
-        <div class="tarjeta"><h3>Votos por mesa</h3><div class="mesas-tiles" id="rMesas"></div></div>
+        <div class="tarjeta"><h3>Votos por mesa <small style="font-weight:400;color:var(--suave)">(votos / electores asignados)</small></h3><div class="mesas-tiles" id="rMesas"></div></div>
       </div>
       <div class="fila">
         <div class="tarjeta"><h3>Participación por sección</h3><div class="scroll-x" style="max-height:420px;overflow:auto"><table><thead><tr><th>Grado</th><th>Sección</th><th class="num">Votaron</th><th class="num">Total</th><th style="width:35%">Avance</th></tr></thead><tbody id="rSecciones"></tbody></table></div></div>
@@ -204,9 +204,18 @@
         <div class="tarjeta">
           <h3>Buscar estudiante</h3>
           <form id="fBuscar" style="display:flex;gap:8px"><input id="bQ" type="text" placeholder="ID, DNI o apellidos"><button class="btn" type="submit">Buscar</button></form>
-          <div class="scroll-x" style="margin-top:12px"><table><thead><tr><th>ID</th><th>Apellidos y nombres</th><th>Grado</th><th>Votó</th><th>Hora / Mesa</th></tr></thead><tbody id="bRes"></tbody></table></div>
+          <div class="scroll-x" style="margin-top:12px"><table><thead><tr><th>ID</th><th>Apellidos y nombres</th><th>Grado</th><th>Votó</th><th>Hora / Mesa</th><th></th></tr></thead><tbody id="bRes"></tbody></table></div>
           <div style="margin-top:14px"><button class="btn sec" onclick="excelParticipacion()">⬇️ Descargar Excel de participación</button></div>
         </div>
+      </div>
+      <div class="tarjeta" style="margin-bottom:16px">
+        <h3>Electores por mesa</h3>
+        <p style="margin:0 0 10px;color:var(--suave);font-size:.9rem">El sistema ubica a cada estudiante en su mesa según grado y sección (mesa impar: A–D, mesa par: E–H). La <b>MESA VOLANTE</b> atiende a cualquier estudiante con alguna dificultad.</p>
+        <div class="control" style="margin-bottom:12px">
+          <button class="btn" onclick="excelPorMesa()">⬇️ Descargar padrón por mesa (Excel)</button>
+          <button class="btn sec" onclick="imprimirPorMesa()">🖨️ Imprimir padrón por mesa</button>
+        </div>
+        <div class="scroll-x"><table><thead><tr><th>Mesa</th><th>Grado</th><th>Secciones</th><th class="num">Electores</th><th class="num">Ya votaron</th></tr></thead><tbody id="pmCuerpo"></tbody></table></div>
       </div>
       <div class="tarjeta" data-super>
         <h3>Agregar estudiante al padrón</h3>
@@ -215,7 +224,7 @@
           <div style="grid-column:span 2"><label>Apellidos y nombres</label><input id="aNombre" type="text" required></div>
           <div><label>Grado</label><select id="aGrado"><option value="1">1.°</option><option value="2">2.°</option><option value="3">3.°</option><option value="4">4.°</option><option value="5">5.°</option></select></div>
           <div><label>Sección</label><input id="aSeccion" type="text"></div>
-          <div><label>DNI</label><input id="aDni" type="text"></div>
+          <div><label>DNI / pasaporte</label><input id="aDni" type="text" placeholder="se completa a 8 cifras"></div>
           <div><button class="btn" type="submit" style="width:100%">Agregar</button></div>
         </form>
       </div>
@@ -378,7 +387,7 @@ $('tabs').addEventListener('click', ev => {
   A.tab = b.dataset.tab;
   document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('activa', x === b));
   document.querySelectorAll('.seccion').forEach(s => s.classList.toggle('activa', s.id === 's-' + A.tab));
-  ({ resumen: cargarResumen, listas: cargarListas, padron: async () => {}, resultados: cargarResultados, usuarios: cargarUsuarios, config: cargarConfig })[A.tab]().catch(manejarError);
+  ({ resumen: cargarResumen, listas: cargarListas, padron: cargarPadronMesas, resultados: cargarResultados, usuarios: cargarUsuarios, config: cargarConfig })[A.tab]().catch(manejarError);
 });
 
 /* ---------- Resumen ---------- */
@@ -413,7 +422,8 @@ async function cargarResumen() {
     <div class="grado-fila"><b>${g.grado ? g.grado + '.° grado' : 'Sin grado'}</b>
     <div class="barra-prog"><div style="width:${pct(g.votaron, g.total)}%"></div></div>
     <span class="num">${fmt(g.votaron)} / ${fmt(g.total)} · ${pct(g.votaron, g.total)}%</span></div>`).join('') || '<p style="color:var(--suave)">Sin datos</p>';
-  $('rMesas').innerHTML = d.mesas.map(m => `<div class="mesa-tile"><span>${esc(m.mesa)}</span><b>${fmt(d.porMesa[m.mesa] || 0)}</b><span>${gradoTexto(m.grado)}</span></div>`).join('');
+  $('rMesas').innerHTML = d.mesas.map(m => `<div class="mesa-tile" ${m.volante ? 'style="background:#fff4e0"' : ''}><span>${esc(m.mesa)}</span><b>${fmt(d.porMesa[m.mesa] || 0)}${m.volante ? '' : '<small style="font-size:.9rem;color:var(--suave)"> / ' + fmt(d.electoresPorMesa[m.mesa] || 0) + '</small>'}</b><span>${m.volante ? 'todas las estudiantes' : gradoTexto(m.grado) + (m.secciones && m.secciones.length ? '<br>' + esc(m.secciones.join(' ')) : '')}</span></div>`).join('')
+    + (d.sinMesa ? `<div class="mesa-tile" style="background:var(--error-claro)"><span>SIN MESA</span><b>${fmt(d.sinMesa)}</b><span>revise secciones</span></div>` : '');
   $('rSecciones').innerHTML = d.porSeccion.map(s => `<tr><td>${s.grado ? s.grado + '.°' : '—'}</td><td>${esc(s.seccion || '—')}</td><td class="num">${s.votaron}</td><td class="num">${s.total}</td><td><div class="barra-prog"><div style="width:${pct(s.votaron, s.total)}%"></div></div></td></tr>`).join('');
   $('rLog').innerHTML = d.log.map(l => `<div><span style="color:var(--suave)">${esc(l.fecha.slice(11))}</span> · <b>${esc(l.accion)}</b> · ${esc(l.usuario)} ${l.detalle ? '· ' + esc(l.detalle) : ''}</div>`).join('') || '<p>Sin actividad.</p>';
   $('rHora').textContent = new Date().toLocaleTimeString('es-PE');
@@ -587,8 +597,10 @@ function resultadoImport(r) {
     ${r.excluidas ? '<br>Excluidas por estado (retiradas/trasladadas): ' + r.excluidas : ''}
     ${r.duplicados.length ? '<br>IDs duplicados omitidos: ' + esc(r.duplicados.slice(0, 20).join(', ')) + (r.duplicados.length > 20 ? '…' : '') : ''}
     ${r.sinGrado ? '<br><span style="color:var(--error)">Sin grado reconocido: ' + r.sinGrado + ' (podrán votar en cualquier mesa)</span>' : ''}
+    ${r.sinMesa ? '<br><span style="color:var(--error)">' + r.sinMesa + ' estudiantes sin mesa asignada (' + esc(r.combosSinMesa.join(', ')) + '). Podrán votar en cualquier mesa de su grado; si desea, asigne la sección en la hoja USUARIOS, columna SECCIONES.</span>' : ''}
     ${r.columnas.dni < 0 ? '<br><span style="color:var(--aviso)">No se encontró la columna DNI: la opción "sin carnet" no funcionará.</span>' : ''}</div>`;
   toast('Padrón importado', 'ok');
+  cargarPadronMesas().catch(manejarError);
 }
 async function confirmarReemplazo() {
   return dialogo('¿Reemplazar el padrón?', '<p>Se borrará el padrón actual y se cargará el nuevo.</p>', 'Sí, importar');
@@ -619,15 +631,22 @@ $('fBuscar').addEventListener('submit', async ev => {
   ev.preventDefault();
   try {
     const r = await api('buscarPadron', { token: A.token, q: $('bQ').value });
-    $('bRes').innerHTML = r.resultados.map(a => `<tr><td>${esc(a.id)}</td><td>${esc(a.nombre)}</td><td>${a.grado || '—'}.° ${esc(a.seccion)}</td><td>${a.voto ? '<b style="color:var(--ok)">SÍ</b>' : 'NO'}</td><td>${a.voto ? esc(a.hora) + ' · ' + esc(a.mesa) + (a.modo === 'MANUAL' ? ' (sin carnet)' : '') : ''}</td></tr>`).join('') || '<tr><td colspan="5">Sin resultados</td></tr>';
+    $('bRes').innerHTML = r.resultados.map(a => `<tr><td>${esc(a.id)}</td><td>${esc(a.nombre)}</td><td>${a.grado || '—'}.° ${esc(a.seccion)}</td><td>${a.voto ? '<b style="color:var(--ok)">SÍ</b>' : 'NO'}</td><td>${a.voto ? esc(a.hora) + ' · ' + esc(a.mesa) + (a.modo === 'MANUAL' ? ' (sin carnet)' : '') : ''}</td><td>${esSuper() && !a.voto ? `<button class="btn peligro chico" onclick="quitarAlumna('${esc(a.id)}', '${esc(a.nombre).replace(/'/g, '')}')">Quitar</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="6">Sin resultados</td></tr>';
   } catch (e) { manejarError(e); }
 });
+async function quitarAlumna(id, nombre) {
+  const ok = await dialogo('¿Quitar del padrón?', `<p><b>${nombre}</b> (ID ${id}) dejará de figurar en el padrón y no podrá votar.</p>`, 'Quitar', true);
+  if (!ok) return;
+  try { await api('quitarAlumna', { token: A.token, id }); toast('Estudiante quitada del padrón', 'ok'); $('fBuscar').requestSubmit(); cargarPadronMesas().catch(() => {}); }
+  catch (e) { manejarError(e); }
+}
 $('fAgregar').addEventListener('submit', async ev => {
   ev.preventDefault();
   try {
     await api('agregarAlumna', { token: A.token, alumna: { id: $('aId').value, nombre: $('aNombre').value, grado: $('aGrado').value, seccion: $('aSeccion').value, dni: $('aDni').value } });
     toast('Estudiante agregada al padrón', 'ok');
     $('fAgregar').reset();
+    cargarPadronMesas().catch(() => {});
   } catch (e) { manejarError(e); }
 });
 async function excelParticipacion() {
@@ -635,12 +654,59 @@ async function excelParticipacion() {
     const r = await api('listaVotantes', { token: A.token });
     const d = A.datos || await api('estadoAdmin', { token: A.token });
     const wb = XLSX.utils.book_new();
-    const h1 = XLSX.utils.aoa_to_sheet([['ID', 'APELLIDOS Y NOMBRES', 'GRADO', 'SECCIÓN', 'VOTÓ', 'HORA', 'MESA', 'MODO']].concat(r.filas));
-    h1['!cols'] = [{ wch: 8 }, { wch: 40 }, { wch: 7 }, { wch: 8 }, { wch: 6 }, { wch: 10 }, { wch: 9 }, { wch: 9 }];
+    const h1 = XLSX.utils.aoa_to_sheet([['ID', 'APELLIDOS Y NOMBRES', 'GRADO', 'SECCIÓN', 'MESA ASIGNADA', 'VOTÓ', 'HORA', 'MESA DE VOTO', 'MODO']].concat(r.filas));
+    h1['!cols'] = [{ wch: 8 }, { wch: 40 }, { wch: 7 }, { wch: 8 }, { wch: 14 }, { wch: 6 }, { wch: 10 }, { wch: 13 }, { wch: 9 }];
     XLSX.utils.book_append_sheet(wb, h1, 'Padrón');
     const h2 = XLSX.utils.aoa_to_sheet([['GRADO', 'SECCIÓN', 'VOTARON', 'TOTAL', '% PARTICIPACIÓN']].concat(d.porSeccion.map(s => [s.grado, s.seccion, s.votaron, s.total, pct(s.votaron, s.total)])));
     XLSX.utils.book_append_sheet(wb, h2, 'Por sección');
     XLSX.writeFile(wb, 'Participacion_Elecciones_NSM_2027.xlsx');
+  } catch (e) { manejarError(e); }
+}
+
+/* ---------- Padrón por mesa ---------- */
+async function cargarPadronMesas() {
+  const d = await api('estadoAdmin', { token: A.token });
+  A.datos = d;
+  $('pmCuerpo').innerHTML = d.mesas.map(m => `<tr ${m.volante ? 'style="background:#fff4e0"' : ''}><td><b>${esc(m.mesa)}</b></td><td>${m.volante ? 'Todos' : m.grado + '.°'}</td><td>${m.volante ? 'Todas (estudiantes con alguna dificultad)' : esc(m.secciones.join(', '))}</td><td class="num">${m.volante ? '—' : fmt(d.electoresPorMesa[m.mesa] || 0)}</td><td class="num">${fmt(d.porMesa[m.mesa] || 0)}</td></tr>`).join('')
+    + (d.sinMesa ? `<tr style="background:var(--error-claro)"><td><b>SIN MESA</b></td><td colspan="2">Grado o sección no asignados a ninguna mesa</td><td class="num">${fmt(d.sinMesa)}</td><td></td></tr>` : '')
+    + `<tr><th colspan="3">TOTAL PADRÓN</th><th class="num">${fmt(d.padron)}</th><th class="num">${fmt(d.votaron)}</th></tr>`;
+}
+
+async function padronAgrupado() {
+  const r = await api('listaVotantes', { token: A.token });
+  const grupos = {};
+  r.mesas.filter(m => !m.volante).forEach(m => { grupos[m.mesa] = { mesa: m, filas: [] }; });
+  r.filas.forEach(f => { const k = f[4]; if (!grupos[k]) grupos[k] = { mesa: { mesa: k, grado: 0, secciones: [] }, filas: [] }; grupos[k].filas.push(f); });
+  Object.values(grupos).forEach(g => g.filas.sort((a, b) => (a[3] < b[3] ? -1 : a[3] > b[3] ? 1 : 0) || (a[1] < b[1] ? -1 : 1)));
+  return Object.values(grupos).filter(g => g.filas.length || g.mesa.grado);
+}
+
+async function excelPorMesa() {
+  try {
+    const grupos = await padronAgrupado();
+    const wb = XLSX.utils.book_new();
+    const res = [['MESA', 'GRADO', 'SECCIONES', 'ELECTORES']].concat(grupos.map(g => [g.mesa.mesa, g.mesa.grado ? g.mesa.grado + '.°' : '', (g.mesa.secciones || []).join(', '), g.filas.length]));
+    const hr = XLSX.utils.aoa_to_sheet(res); hr['!cols'] = [{ wch: 12 }, { wch: 8 }, { wch: 14 }, { wch: 10 }];
+    XLSX.utils.book_append_sheet(wb, hr, 'Resumen');
+    grupos.forEach(g => {
+      const h = XLSX.utils.aoa_to_sheet([[(A.datos.config.ELECCION || '') + ' – PADRÓN DE ELECTORES – ' + g.mesa.mesa + (g.mesa.grado ? ' (' + g.mesa.grado + '.° ' + g.mesa.secciones.join(', ') + ')' : '')], [],
+        ['N.°', 'ID', 'APELLIDOS Y NOMBRES', 'GRADO', 'SECCIÓN', 'VOTÓ']].concat(g.filas.map((f, i) => [i + 1, f[0], f[1], f[2] ? f[2] + '.°' : '', f[3], f[5]])));
+      h['!cols'] = [{ wch: 5 }, { wch: 8 }, { wch: 42 }, { wch: 7 }, { wch: 9 }, { wch: 7 }];
+      XLSX.utils.book_append_sheet(wb, h, g.mesa.mesa.slice(0, 30));
+    });
+    XLSX.writeFile(wb, 'Padron_por_mesa_Elecciones_NSM_2027.xlsx');
+  } catch (e) { manejarError(e); }
+}
+
+async function imprimirPorMesa() {
+  try {
+    const grupos = await padronAgrupado();
+    const c = A.datos.config;
+    imprimir(grupos.map((g, k) => `<div style="${k < grupos.length - 1 ? 'page-break-after:always' : ''}">
+      <h1>${esc(c.INSTITUCION)}</h1><h2>${esc(c.ELECCION)}</h2>
+      <div class="caja">PADRÓN DE ELECTORES – ${esc(g.mesa.mesa)}${g.mesa.grado ? ' · ' + g.mesa.grado + '.° grado · Secciones ' + esc(g.mesa.secciones.join(', ')) : ''} · ${g.filas.length} electoras</div>
+      <table><tr><th style="width:7%">N.°</th><th style="width:10%">ID</th><th>Apellidos y nombres</th><th style="width:12%">Grado y sección</th><th style="width:14%">Observación</th></tr>
+      ${g.filas.map((f, i) => `<tr><td>${i + 1}</td><td>${esc(f[0])}</td><td>${esc(f[1])}</td><td>${f[2] ? f[2] + '.° ' : ''}${esc(f[3])}</td><td></td></tr>`).join('')}</table></div>`).join(''));
   } catch (e) { manejarError(e); }
 }
 
@@ -702,7 +768,7 @@ async function actaApertura() {
       <p>Siendo las ________ horas, el Comité Electoral, en presencia de las personeras de lista, verifica el estado de la urna electrónica y del padrón:</p>
       <div class="caja">VOTOS EN LA URNA ELECTRÓNICA: ${d.urnaTotal} &nbsp;|&nbsp; ESTUDIANTES QUE YA VOTARON: ${d.votaron}</div>
       <table><tr><th>Padrón electoral</th><td>${fmt(d.padron)} estudiantes</td></tr>
-      <tr><th>Mesas habilitadas</th><td>${d.mesas.length} (${d.mesas.map(m => m.mesa + ': ' + m.grado + '.°').join(', ')})</td></tr>
+      <tr><th>Mesas habilitadas</th><td>${d.mesas.length}: ${d.mesas.map(m => m.volante ? m.mesa + ' (todas)' : m.mesa + ' (' + m.grado + '.° ' + (m.secciones || []).join('') + ': ' + (d.electoresPorMesa[m.mesa] || 0) + ' electoras)').join(', ')}</td></tr>
       <tr><th>Horario</th><td>${esc(d.config.FECHA)} de ${esc(d.config.HORA_APERTURA)} a ${esc(d.config.HORA_CIERRE)}</td></tr>
       <tr><th>Voto en blanco</th><td>${d.config.VOTO_BLANCO === 'SI' ? 'Habilitado' : 'No habilitado'}</td></tr></table>
       <h3>Listas participantes</h3>
@@ -736,7 +802,7 @@ async function cargarUsuarios() {
   const r = await api('listarUsuarios', { token: A.token });
   A.usuarios = r.usuarios;
   $('uCuerpo').innerHTML = r.usuarios.map(u => `<tr>
-    <td><b>${esc(u.usuario)}</b></td><td>${esc(u.rol)}</td><td>${u.rol === 'MESA' ? esc(u.mesa) + ' · ' + gradoTexto(u.grado) : '—'}</td><td>${esc(u.nombre)}</td>
+    <td><b>${esc(u.usuario)}</b></td><td>${esc(u.rol)}</td><td>${u.rol === 'MESA' ? (u.mesa === 'VOLANTE' ? 'VOLANTE · todas' : esc(u.mesa) + ' · ' + gradoTexto(u.grado) + (u.secciones.length ? ' · ' + esc(u.secciones.join(' ')) : '')) : '—'}</td><td>${esc(u.nombre)}</td>
     <td><code class="${mostrarClaves ? '' : 'clave-oculta'}">${esc(u.clave)}</code></td>
     <td>${u.activo ? '✔' : '<span style="color:var(--error)">✘</span>'}</td>
     <td style="white-space:nowrap"><button class="btn sec chico" onclick="cambiarClave('${esc(u.usuario)}')">Cambiar clave</button>
@@ -758,7 +824,7 @@ function imprimirCredenciales() {
   const c = (A.datos && A.datos.config) || {};
   const tarjetas = A.usuarios.filter(u => u.rol !== 'SUPERADMIN' && u.activo).map(u => `
     <div class="cred"><h4>${esc(c.ELECCION || 'Elecciones NSM 2027')}</h4>
-    <div>${u.rol === 'MESA' ? 'Miembros de mesa · ' + gradoTexto(u.grado) : 'Comité Electoral (tablet de reserva)'}</div>
+    <div>${u.rol === 'MESA' ? (u.mesa === 'VOLANTE' ? 'MESA VOLANTE · estudiantes con alguna dificultad (todos los grados)' : 'Miembros de mesa · ' + gradoTexto(u.grado) + (u.secciones.length ? ' · Secciones ' + esc(u.secciones.join(' ')) : '')) : 'Comité Electoral (tablet de reserva)'}</div>
     <div class="u">Usuario: ${esc(u.usuario)}</div><div class="u">Clave: ${esc(u.clave)}</div>
     <small>Ingresar en: ${esc(urlMesa)}</small></div>`).join('');
   imprimir(`<div class="credenciales">${tarjetas}</div>`);
