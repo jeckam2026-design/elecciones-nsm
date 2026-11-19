@@ -276,7 +276,7 @@ $('fLogin').addEventListener('submit', async ev => {
 async function elegirMesa() {
   const d = await api('datosMesa', { token: S.token });
   $('selUsuario').textContent = S.usuario.nombre + ' (' + S.usuario.rol + ')';
-  $('mesasGrid').innerHTML = d.mesas.map(m => `<button class="btn" onclick="seleccionarMesa('${esc(m.mesa)}')">${esc(m.mesa)}<small>${esc(gradoTexto(m.grado))}</small></button>`).join('');
+  $('mesasGrid').innerHTML = d.mesas.map(m => `<button class="btn" onclick="seleccionarMesa('${esc(m.mesa)}')">${esc(m.mesa)}<small>${esc(m.volante ? 'Mesa volante · todas' : gradoTexto(m.grado) + (m.secciones && m.secciones.length ? ' · ' + m.secciones.join(' ') : ''))}</small></button>`).join('');
   mostrar('pMesaSel');
 }
 async function seleccionarMesa(m) { S.mesa = m; try { await cargarMesa(false); } catch (e) { toast(e.message, 'error'); } }
@@ -300,7 +300,7 @@ async function cargarMesa(ligero) {
 function pintarCabecera() {
   const d = S.datos;
   $('bMesa').textContent = d.mesa;
-  $('bGrado').textContent = gradoTexto(d.grado);
+  $('bGrado').textContent = d.volante ? 'MESA VOLANTE · todas las estudiantes' : gradoTexto(d.grado) + (d.secciones && d.secciones.length ? ' · Secciones ' + d.secciones.join(' ') : '');
   $('bEleccion').textContent = d.eleccion;
   $('cedEleccion').textContent = d.eleccion + ' · ' + d.mesa;
   $('bPrueba').classList.toggle('oculto', !d.modoPrueba);
