@@ -44,6 +44,8 @@
   .lista-card .n { background: var(--azul); color: #fff; border-radius: 8px; padding: 2px 10px; font-weight: 800; display: inline-block; }
   .lista-card .nom { font-weight: 800; color: var(--azul); margin-top: 4px; }
   .lista-card .acc { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+  textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--borde); border-radius: 10px; font: inherit; font-size: .9rem; resize: vertical; }
+  .equipo-tabla td, .equipo-tabla th { font-size: .9rem; }
   .preview-simbolo { width: 140px; height: 140px; border: 2px dashed var(--borde); border-radius: 14px; display: grid; place-items: center; color: var(--suave); font-size: .85rem; text-align: center; margin-top: 8px; overflow: hidden; background: #fff; }
   .dos-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .ganadora td { background: #fff7d6; font-weight: 700; }
@@ -155,6 +157,10 @@
           <input id="flNombre" type="text" required placeholder="Ej.: Mercedarias Unidas">
           <label for="flCandidata">Candidata a alcaldesa (opcional)</label>
           <input id="flCandidata" type="text" placeholder="Nombre de la candidata">
+          <label for="flLema">Significado de la sigla (opcional)</label>
+          <input id="flLema" type="text" placeholder="Ej.: Amistad, Unión, Respeto y Acción">
+          <label for="flEquipo">Equipo completo (no sale en la cédula, sí en el resultado final)</label>
+          <textarea id="flEquipo" rows="7" placeholder="Una integrante por línea:&#10;ALCALDESA: Nombre Apellidos | 4° G&#10;TENIENTE ALCALDE: Nombre Apellidos | 4° G&#10;REGIDORA DE EDUCACIÓN: Nombre Apellidos | 1° H&#10;ASESOR/A: Prof. Nombre Apellidos"></textarea>
           <label>Símbolo de la lista</label>
           <input id="flArchivo" type="file" accept="image/*">
           <div style="display:flex;gap:12px;align-items:end">
@@ -167,6 +173,11 @@
           </div>
         </form>
         <div>
+          <div class="tarjeta" style="margin-bottom:16px" id="lImportar">
+            <h3>Importar listas desde Excel</h3>
+            <p style="margin:0 0 8px;color:var(--suave);font-size:.9rem">Use el Excel de "Candidatas aptas" (bloques con NOMBRE DE LA LISTA, ALCALDESA, TENIENTE ALCALDE, REGIDORAS y ASESOR/A). Se registran las listas con todo su equipo; luego solo agregue el símbolo de cada una con <b>Editar</b>.</p>
+            <input id="lArchivo" type="file" accept=".xlsx,.xls">
+          </div>
           <div class="tarjeta" style="margin-bottom:16px"><h3>Listas registradas (<span id="lCuenta">0</span>)</h3><div class="lista-cards" id="lCards"></div></div>
           <div class="aviso info">La cédula muestra las listas en orden de número y, al final, el VOTO EN BLANCO (si está activado en Configuración). Abra <b>🗳️ Mesa</b> para ver la cédula tal como la verán las estudiantes.</div>
         </div>
@@ -434,7 +445,8 @@ async function cargarListas() {
   A.datos = d; A.listas = d.listas;
   const bloqueado = d.estado !== 'PREPARACION' || d.votaron > 0 || d.urnaTotal > 0;
   $('lBloqueo').classList.toggle('oculto', !bloqueado);
-  $('fLista').querySelectorAll('input,button').forEach(el => { el.disabled = bloqueado; });
+  $('fLista').querySelectorAll('input,button,textarea').forEach(el => { el.disabled = bloqueado; });
+  $('lImportar').classList.toggle('oculto', bloqueado);
   $('lCuenta').textContent = d.listas.length;
   $('lCards').innerHTML = d.listas.map(l => `
     <div class="lista-card" style="border-color:${esc(l.color || '#d7dde7')}">
@@ -442,6 +454,7 @@ async function cargarListas() {
       <div class="img">${simboloHTML(l)}</div>
       <div class="nom">${esc(l.nombre)}</div>
       <div style="color:var(--suave);font-size:.88rem">${esc(l.candidata || '')}</div>
+      <div style="font-size:.8rem;margin-top:4px;color:${l.equipo && l.equipo.integrantes.length ? 'var(--ok)' : 'var(--aviso)'}">${l.equipo && l.equipo.integrantes.length ? '👥 ' + l.equipo.integrantes.length + ' integrantes' : '⚠ sin equipo registrado'}${l.simbolo ? '' : ' · ⚠ sin símbolo'}</div>
       <div class="acc">${bloqueado ? '' : `<button class="btn sec chico" onclick="editarLista(${l.numero})">Editar</button><button class="btn peligro chico" onclick="eliminarLista(${l.numero})">Eliminar</button>`}</div>
     </div>`).join('') || '<p style="color:var(--suave)">Aún no hay listas. Registre la primera con el formulario.</p>';
 }
@@ -454,6 +467,7 @@ function limpiarFormLista() {
   A.editando = null; A.simbolo = '';
   $('fLista').reset(); $('flColor').value = '#1d4e89';
   $('flTitulo').textContent = 'Registrar lista';
+  $('flEquipo').value = ''; $('flLema').value = '';
   const usados = A.listas.map(l => l.numero);
   let n = 1; while (usados.includes(n)) n++;
   $('flNumero').value = n;
@@ -465,6 +479,8 @@ function editarLista(n) {
   $('flNumero').value = l.numero; $('flNombre').value = l.nombre; $('flCandidata').value = l.candidata || '';
   $('flColor').value = /^#[0-9a-f]{6}$/i.test(l.color) ? l.color : '#1d4e89';
   $('flTitulo').textContent = 'Editar lista N.° ' + n;
+  $('flLema').value = (l.equipo && l.equipo.lema) || '';
+  $('flEquipo').value = ((l.equipo && l.equipo.integrantes) || []).map(x => x.cargo + ': ' + x.nombre + (x.grado ? ' | ' + x.grado : '')).join('\n');
   pintarPreview();
   $('fLista').scrollIntoView({ behavior: 'smooth' });
 }
@@ -478,7 +494,8 @@ $('fLista').addEventListener('submit', async ev => {
   ev.preventDefault();
   $('flGuardar').disabled = true;
   try {
-    const lista = { numero: $('flNumero').value, nombre: $('flNombre').value, candidata: $('flCandidata').value, color: $('flColor').value, simbolo: A.simbolo, numeroAnterior: A.editando };
+    const lista = { numero: $('flNumero').value, nombre: $('flNombre').value, candidata: $('flCandidata').value, color: $('flColor').value, simbolo: A.simbolo, numeroAnterior: A.editando,
+      equipo: { lema: $('flLema').value, integrantes: leerEquipoTexto($('flEquipo').value) } };
     await api('guardarLista', { token: A.token, lista });
     toast('Lista N.° ' + lista.numero + ' guardada', 'ok');
     await cargarListas();
@@ -491,6 +508,77 @@ async function eliminarLista(n) {
   if (!ok) return;
   try { await api('eliminarLista', { token: A.token, numero: n }); toast('Lista eliminada', 'ok'); await cargarListas(); limpiarFormLista(); }
   catch (e) { manejarError(e); }
+}
+
+function leerEquipoTexto(txt) {
+  return String(txt || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
+    let cargo = '', resto = l;
+    const i = l.indexOf(':');
+    if (i > 0) { cargo = l.slice(0, i).trim(); resto = l.slice(i + 1).trim(); }
+    const [nombre, grado] = resto.split('|').map(x => (x || '').trim());
+    return { cargo: cargo.toUpperCase(), nombre, grado: grado || '' };
+  }).filter(x => x.nombre);
+}
+
+// "CUBA MORALES, YAFITH ANTUANET" -> "Yafith Antuanet Cuba Morales"
+function nombreNatural(s) {
+  s = String(s || '').replace(/\s+/g, ' ').trim();
+  let pref = '';
+  const m = s.match(/^(Prof\.?|Profa\.?|Lic\.?|Mg\.?|Dr\.?|Dra\.?)\s+/i);
+  if (m) { pref = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase(); if (!pref.endsWith('.')) pref += '.'; s = s.slice(m[0].length); }
+  if (s.includes(',')) { const [ap, no] = s.split(','); s = no.trim() + ' ' + ap.trim(); }
+  const menores = ['de', 'del', 'la', 'las', 'los', 'y'];
+  s = s.toLowerCase().split(' ').map((w, k) => (k > 0 && menores.includes(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  return (pref ? pref + ' ' : '') + s;
+}
+
+const COLORES_LISTA = ['#c62828', '#1565c0', '#2e7d32', '#ef6c00', '#6a1b9a', '#00838f', '#ad1457', '#4e342e'];
+
+$('lArchivo').addEventListener('change', async () => {
+  const f = $('lArchivo').files[0];
+  if (!f) return;
+  try {
+    const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+    const filas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' });
+    const listas = [];
+    let actual = null;
+    filas.forEach(r => {
+      const cargo = String(r[1] || '').trim().toUpperCase();
+      const valor = String(r[2] || '').trim();
+      if (cargo === 'NOMBRE DE LA LISTA') {
+        const num = parseInt(String(r[3] || '').replace(/\D+/g, ''), 10) || listas.length + 1;
+        const k = valor.indexOf(':');
+        actual = { numero: num, nombre: (k > 0 ? valor.slice(0, k) : valor).trim(), lema: k > 0 ? valor.slice(k + 1).replace(/\s+/g, ' ').trim().replace(/\.$/, '') : '', integrantes: [], candidata: '' };
+        listas.push(actual);
+      } else if (actual && cargo && valor && cargo !== 'CARGO') {
+        const nombre = nombreNatural(valor);
+        actual.integrantes.push({ cargo, nombre, grado: String(r[3] || '').trim() });
+        if (cargo === 'ALCALDESA') actual.candidata = nombre;
+      }
+    });
+    if (!listas.length) throw new Error('No se encontraron bloques con "NOMBRE DE LA LISTA" en el archivo.');
+    const resumen = listas.map(l => `<tr><td>${l.numero}</td><td><b>${esc(l.nombre)}</b><br><small>${esc(l.lema)}</small></td><td>${esc(l.candidata)}</td><td class="num">${l.integrantes.length}</td></tr>`).join('');
+    const ok = await dialogo('Importar ' + listas.length + ' listas', `<p>Revise los datos. Las listas con el mismo número se actualizarán y conservarán su símbolo.</p>
+      <div style="max-height:340px;overflow:auto"><table><tr><th>N.°</th><th>Lista</th><th>Alcaldesa</th><th class="num">Integrantes</th></tr>${resumen}</table></div>`, 'Importar');
+    if (!ok) return;
+    for (const l of listas) {
+      const previa = A.listas.find(x => x.numero === l.numero);
+      await api('guardarLista', { token: A.token, lista: {
+        numero: l.numero, numeroAnterior: previa ? l.numero : null, nombre: l.nombre, candidata: l.candidata,
+        color: previa ? previa.color : COLORES_LISTA[(l.numero - 1) % COLORES_LISTA.length],
+        simbolo: previa ? previa.simbolo : '', equipo: { lema: l.lema, integrantes: l.integrantes } } });
+    }
+    toast(listas.length + ' listas importadas', 'ok');
+    await cargarListas(); limpiarFormLista();
+  } catch (e) { manejarError(e); }
+  finally { $('lArchivo').value = ''; }
+});
+
+function equipoHTML(o) {
+  const e = o.equipo || {};
+  if (!e.integrantes || !e.integrantes.length) return '';
+  return `<table class="equipo-tabla" style="margin-top:10px"><tr><th>Cargo</th><th>Apellidos y nombres</th><th>Grado y sección</th></tr>
+    ${e.integrantes.map(x => `<tr><td>${esc(x.cargo)}</td><td>${esc(x.nombre)}</td><td>${esc(x.grado)}</td></tr>`).join('')}</table>`;
 }
 
 /* ---------- Padrón ---------- */
@@ -570,7 +658,7 @@ async function cargarResultados() {
   $('xCuadraTxt').textContent = r.cuadra ? 'emitidos = estudiantes que votaron' : 'emitidos (' + r.emitidos + ') ≠ votaron (' + r.votaron + ')';
   $('xCuadraCaja').className = 'kpi ' + (r.cuadra ? 'ok' : 'mal');
   const g = r.opciones.find(o => o.numero === r.ganadora);
-  $('xGanadora').innerHTML = g ? `<div class="aviso ok" style="font-size:1.1rem">🏆 <b>Lista ganadora: N.° ${g.numero} – ${esc(g.nombre)}</b> con ${fmt(g.votos)} votos (${g.pctValidos}% de los votos válidos)</div>`
+  $('xGanadora').innerHTML = g ? `<div class="tarjeta" style="margin-bottom:16px;border:2px solid var(--oro)"><div style="font-size:1.15rem;color:var(--azul)">🏆 <b>Lista ganadora: N.° ${g.numero} – ${esc(g.nombre)}</b>${g.equipo && g.equipo.lema ? ' <span style="color:var(--suave)">(' + esc(g.equipo.lema) + ')</span>' : ''}</div><div style="margin-top:4px">${fmt(g.votos)} votos · ${g.pctValidos}% de los votos válidos</div><h3 style="margin-top:14px">Municipio Escolar 2027 electo</h3>${equipoHTML(g) || '<p style="color:var(--aviso)">Esta lista no tiene su equipo registrado.</p>'}</div>`
     : r.empate.length ? `<div class="aviso alerta" style="font-size:1.1rem">⚖️ <b>EMPATE</b> entre las listas N.° ${r.empate.join(', ')}. El Comité Electoral debe resolver según el reglamento.</div>` : '';
   $('xCab').innerHTML = `<tr><th>N.°</th><th></th><th>Lista</th>${r.mesas.map(m => `<th class="num">${esc(m.replace('MESA', 'M'))}</th>`).join('')}<th class="num">TOTAL</th><th class="num">% válidos</th><th class="num">% emitidos</th></tr>`;
   const ordenadas = r.opciones.slice().sort((a, b) => b.votos - a.votos || a.numero - b.numero);
@@ -639,6 +727,7 @@ function actaEscrutinio() {
     ${r.opciones.map(o => `<tr><td>Lista ${o.numero}</td>${r.mesas.map(m => `<td style="text-align:right">${o.porMesa[m] || 0}</td>`).join('')}</tr>`).join('')}
     <tr><td>Blanco</td>${r.mesas.map(m => `<td style="text-align:right">${r.blancosPorMesa[m] || 0}</td>`).join('')}</tr></table>
     <div class="caja">${g ? 'LISTA GANADORA: N.° ' + g.numero + ' – ' + esc(g.nombre) + (g.candidata ? '<br>Alcaldesa electa: ' + esc(g.candidata) : '') : 'EMPATE ENTRE LAS LISTAS N.° ' + r.empate.join(', ')}</div>
+    ${g && g.equipo && g.equipo.integrantes.length ? '<h3>Municipio Escolar 2027 electo</h3>' + equipoHTML(g) : ''}
     ${firmas(r.opciones)}`);
 }
 
