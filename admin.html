@@ -5,7 +5,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f2b55%22/%3E%3Ctext x=%2250%22 y=%2272%22 font-size=%2266%22 text-anchor=%22middle%22 fill=%22%23f2b705%22%3E✓%3C/text%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0f2b55">
-<title>Panel del Comité Electoral · Elecciones NSM 2027</title>
+<title>Panel del Comité Electoral · Elecciones NSM 2026</title>
 <link rel="stylesheet" href="estilos.css">
 <style>
   .tabs { display: flex; gap: 4px; background: #fff; padding: 0 12px; border-bottom: 1px solid var(--borde); overflow-x: auto; position: sticky; top: 56px; z-index: 15; }
@@ -96,7 +96,7 @@
 <!-- ============ LOGIN ============ -->
 <section id="pLogin" class="login-fondo">
   <form class="tarjeta login-caja" id="fLogin" autocomplete="off">
-    <div class="marca"><div class="urna">✓</div><div><h1>Panel del Comité Electoral</h1><p class="sub">Elección del Municipio Escolar 2027 · NSM</p></div></div>
+    <div class="marca"><div class="urna">✓</div><div><h1>Panel del Comité Electoral</h1><p class="sub">Elección del Municipio Escolar 2026 · NSM</p></div></div>
     <label for="lUsuario">Usuario</label>
     <input id="lUsuario" type="text" required>
     <label for="lClave">Clave</label>
@@ -677,7 +677,7 @@ async function excelParticipacion() {
     XLSX.utils.book_append_sheet(wb, h1, 'Padrón');
     const h2 = XLSX.utils.aoa_to_sheet([['GRADO', 'SECCIÓN', 'VOTARON', 'TOTAL', '% PARTICIPACIÓN']].concat(d.porSeccion.map(s => [s.grado, s.seccion, s.votaron, s.total, pct(s.votaron, s.total)])));
     XLSX.utils.book_append_sheet(wb, h2, 'Por sección');
-    XLSX.writeFile(wb, 'Participacion_Elecciones_NSM_2027.xlsx');
+    XLSX.writeFile(wb, 'Participacion_Elecciones_NSM_2026.xlsx');
   } catch (e) { manejarError(e); }
 }
 
@@ -712,7 +712,7 @@ async function excelPorMesa() {
       h['!cols'] = [{ wch: 5 }, { wch: 8 }, { wch: 42 }, { wch: 7 }, { wch: 9 }, { wch: 7 }];
       XLSX.utils.book_append_sheet(wb, h, g.mesa.mesa.slice(0, 30));
     });
-    XLSX.writeFile(wb, 'Padron_por_mesa_Elecciones_NSM_2027.xlsx');
+    XLSX.writeFile(wb, 'Padron_por_mesa_Elecciones_NSM_2026.xlsx');
   } catch (e) { manejarError(e); }
 }
 
@@ -742,7 +742,7 @@ async function cargarResultados() {
   $('xCuadraTxt').textContent = r.cuadra ? 'emitidos = estudiantes que votaron' : 'emitidos (' + r.emitidos + ') ≠ votaron (' + r.votaron + ')';
   $('xCuadraCaja').className = 'kpi ' + (r.cuadra ? 'ok' : 'mal');
   const g = r.opciones.find(o => o.numero === r.ganadora);
-  $('xGanadora').innerHTML = g ? `<div class="tarjeta" style="margin-bottom:16px;border:2px solid var(--oro)"><div style="font-size:1.15rem;color:var(--azul)">🏆 <b>Lista ganadora: N.° ${g.numero} – ${esc(g.nombre)}</b>${g.equipo && g.equipo.lema ? ' <span style="color:var(--suave)">(' + esc(g.equipo.lema) + ')</span>' : ''}</div><div style="margin-top:4px">${fmt(g.votos)} votos · ${g.pctValidos}% de los votos válidos</div><h3 style="margin-top:14px">Municipio Escolar 2027 electo</h3>${equipoHTML(g) || '<p style="color:var(--aviso)">Esta lista no tiene su equipo registrado.</p>'}</div>`
+  $('xGanadora').innerHTML = g ? `<div class="tarjeta" style="margin-bottom:16px;border:2px solid var(--oro)"><div style="font-size:1.15rem;color:var(--azul)">🏆 <b>Lista ganadora: N.° ${g.numero} – ${esc(g.nombre)}</b>${g.equipo && g.equipo.lema ? ' <span style="color:var(--suave)">(' + esc(g.equipo.lema) + ')</span>' : ''}</div><div style="margin-top:4px">${fmt(g.votos)} votos · ${g.pctValidos}% de los votos válidos</div><h3 style="margin-top:14px">Municipio Escolar 2026 electo</h3>${equipoHTML(g) || '<p style="color:var(--aviso)">Esta lista no tiene su equipo registrado.</p>'}</div>`
     : r.empate.length ? `<div class="aviso alerta" style="font-size:1.1rem">⚖️ <b>EMPATE</b> entre las listas N.° ${r.empate.join(', ')}. El Comité Electoral debe resolver según el reglamento.</div>` : '';
   $('xCab').innerHTML = `<tr><th>N.°</th><th></th><th>Lista</th>${r.mesas.map(m => `<th class="num">${esc(m.replace('MESA', 'M'))}</th>`).join('')}<th class="num">TOTAL</th><th class="num">% válidos</th><th class="num">% emitidos</th></tr>`;
   const ordenadas = r.opciones.slice().sort((a, b) => b.votos - a.votos || a.numero - b.numero);
@@ -761,7 +761,7 @@ function excelResultados() {
   filas.push([]); filas.push(['', 'Padrón electoral', '', r.padron]); filas.push(['', 'Participación (%)', '', r.participacion]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(filas), 'Resultados');
-  XLSX.writeFile(wb, 'Resultados_Elecciones_NSM_2027.xlsx');
+  XLSX.writeFile(wb, 'Resultados_Elecciones_NSM_2026.xlsx');
 }
 
 /* ---------- Actas ---------- */
@@ -811,7 +811,7 @@ function actaEscrutinio() {
     ${r.opciones.map(o => `<tr><td>Lista ${o.numero}</td>${r.mesas.map(m => `<td style="text-align:right">${o.porMesa[m] || 0}</td>`).join('')}</tr>`).join('')}
     <tr><td>Blanco</td>${r.mesas.map(m => `<td style="text-align:right">${r.blancosPorMesa[m] || 0}</td>`).join('')}</tr></table>
     <div class="caja">${g ? 'LISTA GANADORA: N.° ' + g.numero + ' – ' + esc(g.nombre) + (g.candidata ? '<br>Alcaldesa electa: ' + esc(g.candidata) : '') : 'EMPATE ENTRE LAS LISTAS N.° ' + r.empate.join(', ')}</div>
-    ${g && g.equipo && g.equipo.integrantes.length ? '<h3>Municipio Escolar 2027 electo</h3>' + equipoHTML(g) : ''}
+    ${g && g.equipo && g.equipo.integrantes.length ? '<h3>Municipio Escolar 2026 electo</h3>' + equipoHTML(g) : ''}
     ${firmas(r.opciones)}`);
 }
 
@@ -841,7 +841,7 @@ function imprimirCredenciales() {
   const urlMesa = location.href.replace(/admin\.html.*$/, 'index.html');
   const c = (A.datos && A.datos.config) || {};
   const tarjetas = A.usuarios.filter(u => u.rol !== 'SUPERADMIN' && u.activo).map(u => `
-    <div class="cred"><h4>${esc(c.ELECCION || 'Elecciones NSM 2027')}</h4>
+    <div class="cred"><h4>${esc(c.ELECCION || 'Elecciones NSM 2026')}</h4>
     <div>${u.rol === 'MESA' ? (u.mesa === 'VOLANTE' ? 'MESA VOLANTE · estudiantes con alguna dificultad (todos los grados)' : 'Miembros de mesa · ' + gradoTexto(u.grado) + (u.secciones.length ? ' · Secciones ' + esc(u.secciones.join(' ')) : '')) : 'Comité Electoral (tablet de reserva)'}</div>
     <div class="u">Usuario: ${esc(u.usuario)}</div><div class="u">Clave: ${esc(u.clave)}</div>
     <small>Ingresar en: ${esc(urlMesa)}</small></div>`).join('');
