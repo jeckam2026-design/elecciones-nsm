@@ -1,4 +1,4 @@
-/* Funciones comunes – Votación electrónica QR · NSM 2027 */
+/* Funciones comunes – Votación electrónica QR · NSM 2026 */
 (function () {
   'use strict';
 
