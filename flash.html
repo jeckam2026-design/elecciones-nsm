@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f2b55%22/%3E%3Ctext x=%2250%22 y=%2272%22 font-size=%2266%22 text-anchor=%22middle%22 fill=%22%23f2b705%22%3E✓%3C/text%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flash Electoral · Elecciones NSM 2027</title>
+<title>Flash Electoral · Elecciones NSM 2026</title>
 <style>
   :root { --azul: #0b2349; --azul2: #163f7a; --oro: #f5c02a; --oro2: #ffde7a; --blanco: #f6f8fc; --suave: #a9b8d3; }
   * { box-sizing: border-box; }
@@ -122,7 +122,7 @@
 
 <div class="cab">
   <img id="logo" alt="" style="display:none">
-  <div><div class="t1" id="tInst">I.E.E. "Nuestra Señora de las Mercedes" – Ayacucho</div><div class="t2" id="tElec">Elección del Municipio Escolar 2027</div></div>
+  <div><div class="t1" id="tInst">I.E.E. "Nuestra Señora de las Mercedes" – Ayacucho</div><div class="t2" id="tElec">Elección del Municipio Escolar 2026</div></div>
   <div class="reloj" id="reloj">--:--</div>
 </div>
 <div class="cinta" id="cinta" style="display:none">SIMULACRO</div>
@@ -178,7 +178,7 @@ function pintarEspera(d) {
   if (F.modo === 'espera') return;
   F.modo = 'espera';
   $('escena').innerHTML = `<div class="centro"><p class="sub" style="letter-spacing:.2em">ELECCIONES ESCOLARES</p>
-    <h1 class="grande">Elige a tu<br><span style="color:var(--oro)">Alcaldesa Escolar 2027</span></h1>
+    <h1 class="grande">Elige a tu<br><span style="color:var(--oro)">Alcaldesa Escolar 2026</span></h1>
     <p class="sub">${esc(fechaLarga(d.fecha))}${d.horaApertura ? ' · desde las ' + esc(d.horaApertura) : ''}</p>
     <p class="sub" style="font-size:1.4em">Vota con tu carnet QR · Tu voto es secreto</p></div>`;
 }
@@ -290,13 +290,13 @@ function mostrarGanadora(r) {
         <div class="nom">LISTA N.° ${g.numero} – ${esc(g.nombre)}</div>
         ${g.equipo.lema ? `<div class="lema">${esc(g.equipo.lema)}</div>` : ''}
         <div class="votos">${g.votos.toLocaleString('es-PE')} votos · ${g.pctValidos}% de los votos válidos</div></div>
-        <div><div class="eq-tit">MUNICIPIO ESCOLAR 2027</div><table class="eq">
+        <div><div class="eq-tit">MUNICIPIO ESCOLAR 2026</div><table class="eq">
         ${eq.map(x => `<tr class="${/ALCALDESA/i.test(x.cargo) && !/TENIENTE/i.test(x.cargo) ? 'alc' : ''}"><td class="c">${esc(x.cargo)}</td><td>${esc(x.nombre)}</td><td class="g">${esc(x.grado)}</td></tr>`).join('')}
         </table></div></div>`;
     } else {
       caja.innerHTML = `<div class="caja"><div class="et">🏆 LISTA GANADORA</div><div class="sim">${simbolo(g)}</div>
         <div class="nom">LISTA N.° ${g.numero} – ${esc(g.nombre)}</div>
-        ${g.candidata ? `<div class="cand"><small>ALCALDESA ESCOLAR 2027</small>${esc(g.candidata)}</div>` : ''}
+        ${g.candidata ? `<div class="cand"><small>ALCALDESA ESCOLAR 2026</small>${esc(g.candidata)}</div>` : ''}
         <div class="votos">${g.votos.toLocaleString('es-PE')} votos · ${g.pctValidos}% de los votos válidos</div></div>`;
     }
     confeti();
