@@ -17,19 +17,22 @@
   .mesas-grid .btn small { font-weight: 400; opacity: .85; }
 
   /* Vista escáner */
-  #vEscaner { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; align-items: stretch; }
-  .camara { position: relative; background: #0b1730; border-radius: 18px; overflow: hidden; height: calc(100vh - 120px); min-height: 320px; }
-  @media (orientation: portrait), (max-width: 760px) {
-    #vEscaner { grid-template-columns: 1fr; }
-    .camara { height: 62vh; }
-    .panel-lateral h2, .panel-lateral p { display: none; }
-    .contador { margin-top: 0; }
-  }
-  #lector { width: 100%; height: 100%; }
-  #lector video { width: 100% !important; height: 100% !important; object-fit: cover; }
+  /* Escáner a pantalla completa (debajo de la barra superior) */
+  .camara { position: fixed; top: var(--barra-h, 56px); left: 0; right: 0; bottom: 0; background: #0b1730; overflow: hidden; z-index: 5; }
+  #lector, #lector > div { width: 100% !important; height: 100% !important; border: 0 !important; }
+  #lector video { width: 100% !important; height: 100% !important; object-fit: cover; display: block; }
+  .camara .titulo-cam { position: absolute; top: 14px; left: 0; right: 0; text-align: center; color: #fff; font-size: 1.6rem; font-weight: 800; text-shadow: 0 2px 8px rgba(0,0,0,.7); pointer-events: none; z-index: 2; }
+  .panel-lateral { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; align-items: stretch; gap: 10px; padding: 12px 14px 14px; background: linear-gradient(transparent, rgba(5, 12, 28, .85) 35%); }
+  .panel-lateral h2, .panel-lateral p { display: none; }
+  .panel-lateral .contador { margin: 0; gap: 10px; }
+  .panel-lateral .contador .tarjeta { padding: 8px 14px; min-width: 110px; background: rgba(255, 255, 255, .92); }
+  .panel-lateral .contador b { font-size: 1.5rem; }
+  .panel-lateral .btn { width: auto !important; margin: 0 !important; flex: 1; background: rgba(255, 255, 255, .92); }
+  .panel-lateral .btn#btnCamara { flex: 1; font-size: 1.05rem; }
+  @media (max-width: 620px) { .panel-lateral { flex-wrap: wrap; } .panel-lateral .contador { width: 100%; } }
   .camara .msg-camara { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: #cfd9ea; padding: 24px; }
-  .camara .marco { position: absolute; inset: 0; pointer-events: none; display: grid; place-items: center; }
-  .camara .marco div { width: 60vmin; height: 60vmin; max-width: 85%; max-height: 85%; border: 4px solid rgba(242, 183, 5, .9); border-radius: 18px; box-shadow: 0 0 0 2000px rgba(5, 12, 28, .35); }
+  .camara .marco { position: absolute; top: 60px; left: 0; right: 0; bottom: 112px; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+  .camara .marco div { width: 88vmin; height: 88vmin; max-width: 94%; max-height: 100%; border: 5px solid rgba(242, 183, 5, .95); border-radius: 22px; box-shadow: 0 0 0 2000px rgba(5, 12, 28, .25); }
   .camara .verificando { position: absolute; inset: 0; background: rgba(8, 20, 45, .75); display: grid; place-items: center; color: #fff; font-size: 1.2rem; font-weight: 700; }
   .panel-lateral h2 { margin: 0 0 6px; font-size: 1.6rem; color: var(--azul); }
   .panel-lateral p { margin: 0 0 14px; color: var(--suave); }
@@ -145,6 +148,7 @@
     <!-- Escáner -->
     <div id="vEscaner">
       <div class="camara">
+        <div class="titulo-cam">Acerque el carnet QR</div>
         <div id="lector"></div>
         <div class="marco" id="marco"><div></div></div>
         <div class="msg-camara oculto" id="msgCamara"></div>
@@ -157,8 +161,7 @@
           <div class="tarjeta"><b id="cVotos">0</b><span>votos en esta mesa</span></div>
           <div class="tarjeta"><b id="cHora">--:--</b><span>hora</span></div>
         </div>
-        <button class="btn sec" style="width:100%" onclick="abrirSinCarnet()">🪪 Estudiante sin carnet (ID + DNI)</button>
-        <button class="btn sec" style="width:100%;margin-top:10px" id="btnCamara" onclick="cambiarCamara()">🔄 Cambiar cámara</button>
+        <button class="btn sec" id="btnCamara" onclick="cambiarCamara()">🔄 Cambiar cámara (frontal / trasera)</button>
       </div>
       <div class="bloqueo tarjeta oculto" id="bloqueo"></div>
     </div>
@@ -222,21 +225,6 @@
   </div>
 </div>
 
-<div class="modal-fondo oculto" id="mSinCarnet">
-  <form class="modal" id="fSinCarnet" style="text-align:left" autocomplete="off">
-    <h2>Estudiante sin carnet</h2>
-    <p style="color:var(--suave);margin:0">Ingrese el ID y el DNI de la estudiante. Esta autorización queda registrada.</p>
-    <label for="scId">ID de la estudiante</label>
-    <input id="scId" type="text" inputmode="numeric" required>
-    <label for="scDni">DNI</label>
-    <input id="scDni" type="text" inputmode="numeric" required>
-    <div class="acciones">
-      <button class="btn sec" type="button" onclick="cerrarSinCarnet()">Cancelar</button>
-      <button class="btn" type="submit">Verificar</button>
-    </div>
-  </form>
-</div>
-
 <div class="modal-fondo oculto" id="mSalir">
   <div class="modal">
     <h2>¿Cerrar la sesión de esta mesa?</h2>
@@ -267,8 +255,8 @@ const TITULOS = {
 
 /* ---------------- Inicio ---------------- */
 window.addEventListener('load', async () => {
-  setInterval(() => { $('cHora').textContent = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }); }, 1000);
-  if (/[?&]salir/.test(location.search)) { almacen.del(CLAVE_SESION); almacen.del('nsm2027_camara'); history.replaceState(null, '', location.pathname); }
+  setInterval(() => { $('cHora').textContent = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false }); }, 1000);
+  if (/[?&]salir/.test(location.search)) { almacen.del(CLAVE_SESION); almacen.del('nsm2027_camara'); almacen.del('nsm2026_facing'); history.replaceState(null, '', location.pathname); }
   const s = almacen.get(CLAVE_SESION);
   if (s && s.token) {
     Object.assign(S, { token: s.token, usuario: s.usuario, mesa: s.mesa });
@@ -323,6 +311,13 @@ async function cargarMesa(ligero) {
   return d;
 }
 
+function medirBarra() {
+  const b = document.querySelector('#pApp .barra');
+  if (b && b.offsetHeight) document.documentElement.style.setProperty('--barra-h', b.offsetHeight + 'px');
+}
+window.addEventListener('resize', medirBarra);
+window.addEventListener('orientationchange', () => setTimeout(medirBarra, 300));
+
 function pintarCabecera() {
   const d = S.datos;
   $('bMesa').textContent = d.mesa;
@@ -334,6 +329,7 @@ function pintarCabecera() {
   $('bEstado').textContent = e === 'ABIERTA' ? 'ABIERTA' : e === 'CERRADA' ? 'CERRADA' : 'EN PREPARACIÓN';
   $('bEstado').className = 'insignia ' + e.toLowerCase();
   $('cVotos').textContent = d.votosMesa || 0;
+  setTimeout(medirBarra, 0);
   const bloq = $('bloqueo');
   if (e !== 'ABIERTA') {
     bloq.innerHTML = e === 'CERRADA'
@@ -381,7 +377,7 @@ function irEscaner() {
 }
 
 async function iniciarEscaner() {
-  if (typeof Html5Qrcode === 'undefined') return mensajeCamara('No se cargó el lector QR. Use la opción "sin carnet".');
+  if (typeof Html5Qrcode === 'undefined') return mensajeCamara('No se cargó el lector QR. Recargue la página.');
   if (S.iniciando) return;
   S.iniciando = true;
   try {
@@ -389,6 +385,7 @@ async function iniciarEscaner() {
     if (!S.escaner) {
       S.escaner = new Html5Qrcode('lector', { verbose: false });
       try { S.camaras = await Html5Qrcode.getCameras(); } catch (e) { S.camaras = []; }
+      S.facing = almacen.get('nsm2026_facing') || null;
       const guardada = almacen.get('nsm2027_camara');
       const idx = S.camaras.findIndex(c => c.id === guardada);
       if (idx >= 0) S.camIdx = idx;
@@ -396,7 +393,6 @@ async function iniciarEscaner() {
         const trasera = S.camaras.findIndex(c => /back|trasera|rear|environment/i.test(c.label));
         S.camIdx = trasera >= 0 ? trasera : 0;
       }
-      $('btnCamara').classList.toggle('oculto', S.camaras.length < 2);
     }
     let estado = S.escaner.getState();
     if (estado === 2) return;                               // ya está escaneando
@@ -405,7 +401,7 @@ async function iniciarEscaner() {
     const fuente = S.camaras.length ? S.camaras[S.camIdx].id : { facingMode: 'environment' };
     await S.escaner.start(fuente, {
       fps: 8,
-      videoConstraints: Object.assign(S.camaras.length ? { deviceId: { exact: S.camaras[S.camIdx].id } } : { facingMode: 'environment' }, { width: { ideal: 640 }, height: { ideal: 480 } })
+      videoConstraints: Object.assign(S.camaras.length >= 2 && !S.facing ? { deviceId: { exact: S.camaras[S.camIdx].id } } : { facingMode: S.facing || 'environment' }, { width: { ideal: 640 }, height: { ideal: 480 } })
     }, alLeerQR, () => {});
     $('msgCamara').classList.add('oculto');
     $('marco').classList.remove('oculto');
@@ -436,10 +432,20 @@ function pausarEscaner() {
 }
 
 async function cambiarCamara() {
-  if (S.camaras.length < 2 || !S.escaner) return;
+  if (!S.escaner) return;
   pausarEscaner();
   if (S.parando) await S.parando;
-  S.camIdx = (S.camIdx + 1) % S.camaras.length;
+  if (S.camaras.length < 2 || S.facing) {
+    // La tablet no informa sus cámaras: se pide frontal o trasera directamente
+    S.facing = S.facing === 'user' ? 'environment' : 'user';
+    almacen.set('nsm2026_facing', S.facing);
+    return iniciarEscaner();
+  }
+  // Alterna entre frontal y trasera; si las etiquetas no lo dicen, pasa a la siguiente cámara
+  const esFrontal = c => /front|frontal|user|facing front|selfie/i.test(c.label);
+  const actualFrontal = esFrontal(S.camaras[S.camIdx]);
+  const otra = S.camaras.findIndex(c => esFrontal(c) !== actualFrontal);
+  S.camIdx = otra >= 0 ? otra : (S.camIdx + 1) % S.camaras.length;
   almacen.set('nsm2027_camara', S.camaras[S.camIdx].id);
   iniciarEscaner();
 }
@@ -598,23 +604,6 @@ async function confirmarVoto() {
     mostrarError(e, [['Entendido', 'btn grande', () => irEscaner()]], 8);
   }
 }
-
-/* ---------------- Sin carnet ---------------- */
-function abrirSinCarnet() {
-  if (S.datos.estado !== 'ABIERTA') return;
-  pausarEscaner();
-  S.vista = 'sincarnet';
-  $('scId').value = ''; $('scDni').value = '';
-  $('mSinCarnet').classList.remove('oculto');
-  setTimeout(() => $('scId').focus(), 50);
-}
-function cerrarSinCarnet() { $('mSinCarnet').classList.add('oculto'); irEscaner(); }
-$('fSinCarnet').addEventListener('submit', ev => {
-  ev.preventDefault();
-  $('mSinCarnet').classList.add('oculto');
-  S.vista = 'escaner';
-  procesarID($('scId').value.trim(), $('scDni').value.trim());
-});
 
 /* ---------------- Errores y sesión ---------------- */
 let errTimer = null;
