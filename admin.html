@@ -616,7 +616,7 @@ function resultadoImport(r) {
     ${r.duplicados.length ? '<br>IDs duplicados omitidos: ' + esc(r.duplicados.slice(0, 20).join(', ')) + (r.duplicados.length > 20 ? '…' : '') : ''}
     ${r.sinGrado ? '<br><span style="color:var(--error)">Sin grado reconocido: ' + r.sinGrado + ' (podrán votar en cualquier mesa)</span>' : ''}
     ${r.sinMesa ? '<br><span style="color:var(--error)">' + r.sinMesa + ' estudiantes sin mesa asignada (' + esc(r.combosSinMesa.join(', ')) + '). Podrán votar en cualquier mesa de su grado; si desea, asigne la sección en la hoja USUARIOS, columna SECCIONES.</span>' : ''}
-    ${r.columnas.dni < 0 ? '<br><span style="color:var(--aviso)">No se encontró la columna DNI: la opción "sin carnet" no funcionará.</span>' : ''}</div>`;
+    ${r.columnas.dni < 0 ? '<br><span style="color:var(--aviso)">No se encontró la columna DNI.</span>' : ''}</div>`;
   toast('Padrón importado', 'ok');
   cargarPadronMesas().catch(manejarError);
 }
