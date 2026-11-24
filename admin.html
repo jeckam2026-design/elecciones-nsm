@@ -2,11 +2,12 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="version" content="2026.11.24-1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f2b55%22/%3E%3Ctext x=%2250%22 y=%2272%22 font-size=%2266%22 text-anchor=%22middle%22 fill=%22%23f2b705%22%3E✓%3C/text%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0f2b55">
 <title>Panel del Comité Electoral · Elecciones NSM 2026</title>
-<link rel="stylesheet" href="estilos.css">
+<link rel="stylesheet" href="estilos.css?v=2026.11.24-1">
 <style>
   .tabs { display: flex; gap: 4px; background: #fff; padding: 0 12px; border-bottom: 1px solid var(--borde); overflow-x: auto; position: sticky; top: 56px; z-index: 15; }
   .tabs button { border: 0; background: none; padding: 14px 16px; font-weight: 600; color: var(--suave); border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
@@ -27,6 +28,23 @@
   .estado-grande .insignia { font-size: 1rem; padding: 8px 16px; }
   .barra-prog { height: 12px; background: var(--azul-claro); border-radius: 999px; overflow: hidden; }
   .barra-prog div { height: 100%; background: linear-gradient(90deg, var(--azul2), #3c7bc4); border-radius: 999px; transition: width .6s; }
+  .avance { display: grid; grid-template-columns: 260px 1fr; gap: 24px; align-items: center; }
+  @media (max-width: 800px) { .avance { grid-template-columns: 1fr; } }
+  .dona { position: relative; width: 240px; height: 240px; margin: 0 auto; }
+  .dona svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .dona .centro { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .dona .centro b { font-size: 2.6rem; color: var(--azul); line-height: 1; font-variant-numeric: tabular-nums; }
+  .dona .centro span { color: var(--suave); font-size: .85rem; margin-top: 4px; }
+  .leyenda-av { display: flex; gap: 18px; justify-content: center; margin-top: 10px; font-size: .95rem; }
+  .leyenda-av i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .mesa-av { display: grid; grid-template-columns: 150px 1fr 240px; gap: 12px; align-items: center; padding: 7px 0; border-bottom: 1px dashed var(--borde); font-size: .92rem; }
+  .mesa-av:last-child { border-bottom: 0; }
+  .mesa-av .barra-prog { height: 16px; }
+  .mesa-av .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .mesa-av .n small { color: var(--suave); }
+  .en-vivo { color: var(--ok); font-weight: 700; font-size: .85rem; }
+  .en-vivo::before { content: ''; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ok); margin-right: 6px; animation: parpadeo 1.2s infinite; }
+  @keyframes parpadeo { 50% { opacity: .2; } }
   .grado-fila { display: grid; grid-template-columns: 90px 1fr 140px; gap: 10px; align-items: center; margin: 10px 0; font-size: .95rem; }
   .grado-fila .num { text-align: right; font-variant-numeric: tabular-nums; color: var(--suave); }
   .mesas-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
@@ -142,6 +160,20 @@
         </div>
         <div id="rAviso"></div>
       </div>
+      <div class="tarjeta" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">
+          <h3 style="margin:0">📈 Avance de la votación en tiempo real</h3>
+          <span class="en-vivo" id="avVivo">EN VIVO · actualizado <span id="avHora">—</span></span>
+        </div>
+        <div class="avance" style="margin-top:14px">
+          <div>
+            <div class="dona"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#e1e6ef" stroke-width="16"/><circle id="avArco" cx="60" cy="60" r="50" fill="none" stroke="#1b8a4b" stroke-width="16" stroke-linecap="round" stroke-dasharray="314.16" stroke-dashoffset="314.16" style="transition:stroke-dashoffset .8s"/></svg>
+              <div class="centro"><b id="avPct">0%</b><span>participación</span></div></div>
+            <div class="leyenda-av"><span><i style="background:#1b8a4b"></i>Votaron <b id="avVot">0</b></span><span><i style="background:#c9d2e0"></i>Faltan <b id="avFal">0</b></span></div>
+          </div>
+          <div id="avMesas"></div>
+        </div>
+      </div>
       <div class="kpis">
         <div class="kpi"><b id="kPadron">0</b><span>estudiantes en el padrón</span></div>
         <div class="kpi"><b id="kVotaron">0</b><span>ya votaron</span></div>
@@ -157,7 +189,7 @@
         <div class="tarjeta"><h3>Participación por sección</h3><div class="scroll-x" style="max-height:420px;overflow:auto"><table><thead><tr><th>Grado</th><th>Sección</th><th class="num">Votaron</th><th class="num">Total</th><th style="width:35%">Avance</th></tr></thead><tbody id="rSecciones"></tbody></table></div></div>
         <div class="tarjeta"><h3>Actividad reciente</h3><div class="log" id="rLog"></div></div>
       </div>
-      <p style="color:var(--suave);font-size:.85rem">Se actualiza automáticamente cada 10 segundos. Última actualización: <span id="rHora">—</span></p>
+      <p style="color:var(--suave);font-size:.85rem">Se actualiza automáticamente cada 5 segundos. Última actualización: <span id="rHora">—</span></p>
     </div>
 
     <!-- LISTAS -->
@@ -322,9 +354,9 @@
 
 <div id="imprimir"></div>
 
-<script src="config.js"></script>
-<script src="comun.js"></script>
-<script src="lib/xlsx.full.min.js"></script>
+<script src="config.js?v=2026.11.24-1"></script>
+<script src="comun.js?v=2026.11.24-1"></script>
+<script src="lib/xlsx.full.min.js?v=2026.11.24-1"></script>
 <script>
 'use strict';
 const { api, esc, almacen, gradoTexto, toast, imagenADataURL, simboloHTML } = window.NSM;
@@ -389,7 +421,7 @@ async function entrar() {
   $('tUsuario').textContent = A.usuario.nombre + ' · ' + A.usuario.rol;
   document.querySelectorAll('[data-super]').forEach(el => el.classList.toggle('oculto', !esSuper()));
   clearInterval(A.timer);
-  A.timer = setInterval(() => { if (A.tab === 'resumen' && !document.hidden) cargarResumen().catch(manejarError); }, 10000);
+  A.timer = setInterval(() => { if (A.tab === 'resumen' && !document.hidden) cargarResumen().catch(manejarError); }, 5000);
 }
 
 function salir() { almacen.del(CLAVE); location.reload(); }
@@ -443,8 +475,28 @@ async function cargarResumen() {
   $('rMesas').innerHTML = d.mesas.map(m => `<div class="mesa-tile" ${m.volante ? 'style="background:#fff4e0"' : ''}><span>${esc(m.mesa)}</span><b>${fmt(d.porMesa[m.mesa] || 0)}${m.volante ? '' : '<small style="font-size:.9rem;color:var(--suave)"> / ' + fmt(d.electoresPorMesa[m.mesa] || 0) + '</small>'}</b><span>${m.volante ? 'todas las estudiantes' : gradoTexto(m.grado) + (m.secciones && m.secciones.length ? '<br>' + esc(m.secciones.join(' ')) : '')}</span></div>`).join('')
     + (d.sinMesa ? `<div class="mesa-tile" style="background:var(--error-claro)"><span>SIN MESA</span><b>${fmt(d.sinMesa)}</b><span>revise secciones</span></div>` : '');
   $('rSecciones').innerHTML = d.porSeccion.map(s => `<tr><td>${s.grado ? s.grado + '.°' : '—'}</td><td>${esc(s.seccion || '—')}</td><td class="num">${s.votaron}</td><td class="num">${s.total}</td><td><div class="barra-prog"><div style="width:${pct(s.votaron, s.total)}%"></div></div></td></tr>`).join('');
+  pintarAvance(d);
   $('rLog').innerHTML = d.log.map(l => `<div><span style="color:var(--suave)">${esc(l.fecha.slice(11))}</span> · <b>${esc(l.accion)}</b> · ${esc(l.usuario)} ${l.detalle ? '· ' + esc(l.detalle) : ''}</div>`).join('') || '<p>Sin actividad.</p>';
   $('rHora').textContent = new Date().toLocaleTimeString('es-PE');
+}
+
+function pintarAvance(d) {
+  const p = pct(d.votaron, d.padron);
+  $('avPct').textContent = p + '%';
+  $('avVot').textContent = fmt(d.votaron);
+  $('avFal').textContent = fmt(d.padron - d.votaron);
+  $('avArco').style.strokeDashoffset = 314.16 * (1 - (d.padron ? d.votaron / d.padron : 0));
+  $('avHora').textContent = new Date().toLocaleTimeString('es-PE', { hour12: false });
+  $('avVivo').style.visibility = d.estado === 'ABIERTA' ? 'visible' : 'hidden';
+  const filas = d.mesas.filter(m => !m.volante).map(m => {
+    const e = d.electoresPorMesa[m.mesa] || 0, v = (d.votaronPorMesaAsignada || {})[m.mesa] || 0, q = pct(v, e);
+    return `<div class="mesa-av"><span><b>${esc(m.mesa)}</b> <small style="color:var(--suave)">${m.grado}.° ${esc((m.secciones || []).join(''))}</small></span>
+      <div class="barra-prog"><div style="width:${q}%;background:${q >= 100 ? 'var(--ok)' : ''}"></div></div>
+      <span class="n"><b>${fmt(v)}</b> / ${fmt(e)} · ${q}% <small>· faltan ${fmt(e - v)}</small></span></div>`;
+  });
+  const vol = d.mesas.find(m => m.volante);
+  if (vol) filas.push(`<div class="mesa-av" style="background:#fff8ea"><span><b>${esc(vol.mesa)}</b> <small style="color:var(--suave)">todas</small></span><div></div><span class="n"><b>${fmt(d.porMesa[vol.mesa] || 0)}</b> <small>votos atendidos</small></span></div>`);
+  $('avMesas').innerHTML = filas.join('');
 }
 
 async function cambiarEstado(nuevo) {
@@ -616,7 +668,7 @@ function resultadoImport(r) {
     ${r.duplicados.length ? '<br>IDs duplicados omitidos: ' + esc(r.duplicados.slice(0, 20).join(', ')) + (r.duplicados.length > 20 ? '…' : '') : ''}
     ${r.sinGrado ? '<br><span style="color:var(--error)">Sin grado reconocido: ' + r.sinGrado + ' (podrán votar en cualquier mesa)</span>' : ''}
     ${r.sinMesa ? '<br><span style="color:var(--error)">' + r.sinMesa + ' estudiantes sin mesa asignada (' + esc(r.combosSinMesa.join(', ')) + '). Podrán votar en cualquier mesa de su grado; si desea, asigne la sección en la hoja USUARIOS, columna SECCIONES.</span>' : ''}
-    ${r.columnas.dni < 0 ? '<br><span style="color:var(--aviso)">No se encontró la columna DNI: la opción "sin carnet" no funcionará.</span>' : ''}</div>`;
+    ${r.columnas.dni < 0 ? '<br><span style="color:var(--aviso)">No se encontró la columna DNI.</span>' : ''}</div>`;
   toast('Padrón importado', 'ok');
   cargarPadronMesas().catch(manejarError);
 }
@@ -873,6 +925,8 @@ async function reiniciar() {
   try { await api('reiniciar', { token: A.token, confirmacion: v.conf }); toast('Votación reiniciada: urna en cero', 'ok'); await cargarConfig(); }
   catch (e) { manejarError(e); }
 }
+
+NSM.vigilarVersion(() => $('mGen').classList.contains('oculto') && !document.activeElement.matches('input,textarea,select'), 60);
 </script>
 </body>
 </html>
