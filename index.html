@@ -398,15 +398,42 @@ async function iniciarEscaner() {
     if (estado === 2) return;                               // ya está escaneando
     if (estado === 3) { try { await S.escaner.stop(); } catch (e) { /* nada */ } }
     if (S.vista !== 'escaner') return;
-    const fuente = S.camaras.length ? S.camaras[S.camIdx].id : { facingMode: 'environment' };
-    await S.escaner.start(fuente, {
-      fps: 8,
-      videoConstraints: Object.assign(S.camaras.length >= 2 && !S.facing ? { deviceId: { exact: S.camaras[S.camIdx].id } } : { facingMode: S.facing || 'environment' }, { width: { ideal: 640 }, height: { ideal: 480 } })
-    }, alLeerQR, () => {});
+    // Algunas tablets tardan en liberar la cámara después de apagarla: esperar un momento
+    const espera = 900 - (Date.now() - (S.ultimoStop || 0));
+    if (espera > 0) await new Promise(r => setTimeout(r, espera));
+    if (S.vista !== 'escaner') return;
+    const porEquipo = S.camaras.length >= 2 && !S.facing;
+    const fuente = porEquipo ? S.camaras[S.camIdx].id : { facingMode: S.facing || 'environment' };
+    // Intentos de más exigente a más simple
+    const intentos = [
+      Object.assign(porEquipo ? { deviceId: { exact: S.camaras[S.camIdx].id } } : { facingMode: S.facing || 'environment' }, { width: { ideal: 640 }, height: { ideal: 480 } }),
+      porEquipo ? { deviceId: S.camaras[S.camIdx].id } : { facingMode: S.facing || 'environment' },
+      null
+    ];
+    let ultimo = null, ok = false;
+    for (let i = 0; i < intentos.length && !ok; i++) {
+      try {
+        if (S.escaner.getState() === 2) { ok = true; break; }
+        const conf = { fps: 8 };
+        if (intentos[i]) conf.videoConstraints = intentos[i];
+        await S.escaner.start(intentos[i] ? fuente : { facingMode: 'environment' }, conf, alLeerQR, () => {});
+        ok = true;
+      } catch (e) {
+        ultimo = e;
+        await new Promise(r => setTimeout(r, 1500));
+        if (S.vista !== 'escaner') return;
+      }
+    }
+    if (!ok) throw ultimo || new Error('Cámara no disponible');
     $('msgCamara').classList.add('oculto');
     $('marco').classList.remove('oculto');
   } catch (e) {
-    mensajeCamara('No se pudo abrir la cámara. Permita el acceso a la cámara en el navegador y recargue la página.<br><small>' + esc(e.message || e) + '</small>');
+    const ocupada = /NotReadable|Could not start|TrackStart|in use/i.test(String(e && (e.name + ' ' + e.message + ' ' + e)));
+    mensajeCamara((ocupada
+      ? '<b>La cámara está ocupada o no respondió.</b><br>Cierre otras aplicaciones o pestañas que usen la cámara (WhatsApp, Cámara, otra pestaña del sistema) y pulse:'
+      : '<b>No se pudo abrir la cámara.</b><br>Permita el acceso a la cámara en el navegador y pulse:')
+      + '<br><button class="btn oro grande" style="margin-top:14px;pointer-events:auto" onclick="reintentarCamara()">🔄 Reintentar cámara</button>'
+      + '<br><small style="opacity:.7">' + esc(e && (e.message || e)) + '</small>');
   } finally {
     S.iniciando = false;
   }
@@ -420,13 +447,20 @@ setInterval(() => {
   } catch (e) { /* nada */ }
 }, 4000);
 
+async function reintentarCamara() {
+  $('msgCamara').classList.add('oculto');
+  try { if (S.escaner && [2, 3].includes(S.escaner.getState())) await S.escaner.stop(); } catch (e) { /* nada */ }
+  S.ultimoStop = Date.now();
+  iniciarEscaner();
+}
+
 function mensajeCamara(html) { $('msgCamara').innerHTML = '<div>' + html + '</div>'; $('msgCamara').classList.remove('oculto'); $('marco').classList.add('oculto'); }
 
 // Apaga la cámara (mientras la estudiante vota) para liberar la tablet
 function pausarEscaner() {
   try {
     if (S.escaner && !S.parando && [2, 3].includes(S.escaner.getState())) {
-      S.parando = S.escaner.stop().catch(() => {}).finally(() => { S.parando = null; });
+      S.parando = S.escaner.stop().catch(() => {}).finally(() => { S.parando = null; S.ultimoStop = Date.now(); });
     }
   } catch (e) { /* nada */ }
 }
