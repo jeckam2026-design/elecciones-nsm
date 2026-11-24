@@ -2,14 +2,15 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="version" content="2026.11.24-1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f2b55%22/%3E%3Ctext x=%2250%22 y=%2272%22 font-size=%2266%22 text-anchor=%22middle%22 fill=%22%23f2b705%22%3E✓%3C/text%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#0f2b55">
 <title>Mesa de votación · Elecciones NSM 2026</title>
-<link rel="stylesheet" href="estilos.css">
+<link rel="stylesheet" href="estilos.css?v=2026.11.24-1">
 <style>
   body { overflow-x: hidden; }
-  main { padding: 16px; max-width: 1200px; margin: 0 auto; }
+  main { padding: 12px 16px; max-width: 1500px; margin: 0 auto; }
 
   /* Selección de mesa (comité) */
   .mesas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 16px; }
@@ -17,14 +18,22 @@
   .mesas-grid .btn small { font-weight: 400; opacity: .85; }
 
   /* Vista escáner */
-  #vEscaner { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-  @media (max-width: 760px) { #vEscaner { grid-template-columns: 1fr; } }
-  .camara { position: relative; background: #0b1730; border-radius: 18px; overflow: hidden; aspect-ratio: 4 / 3.4; }
-  #lector { width: 100%; height: 100%; }
-  #lector video { object-fit: cover; }
+  /* Escáner a pantalla completa (debajo de la barra superior) */
+  .camara { position: fixed; top: var(--barra-h, 56px); left: 0; right: 0; bottom: 0; background: #0b1730; overflow: hidden; z-index: 5; }
+  #lector, #lector > div { width: 100% !important; height: 100% !important; border: 0 !important; }
+  #lector video { width: 100% !important; height: 100% !important; object-fit: cover; display: block; }
+  .camara .titulo-cam { position: absolute; top: 14px; left: 0; right: 0; text-align: center; color: #fff; font-size: 1.6rem; font-weight: 800; text-shadow: 0 2px 8px rgba(0,0,0,.7); pointer-events: none; z-index: 2; }
+  .panel-lateral { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; align-items: stretch; gap: 10px; padding: 12px 14px 14px; background: linear-gradient(transparent, rgba(5, 12, 28, .85) 35%); }
+  .panel-lateral h2, .panel-lateral p { display: none; }
+  .panel-lateral .contador { margin: 0; gap: 10px; }
+  .panel-lateral .contador .tarjeta { padding: 8px 14px; min-width: 110px; background: rgba(255, 255, 255, .92); }
+  .panel-lateral .contador b { font-size: 1.5rem; }
+  .panel-lateral .btn { width: auto !important; margin: 0 !important; flex: 1; background: rgba(255, 255, 255, .92); }
+  .panel-lateral .btn#btnCamara { flex: 1; font-size: 1.05rem; }
+  @media (max-width: 620px) { .panel-lateral { flex-wrap: wrap; } .panel-lateral .contador { width: 100%; } }
   .camara .msg-camara { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: #cfd9ea; padding: 24px; }
-  .camara .marco { position: absolute; inset: 0; pointer-events: none; display: grid; place-items: center; }
-  .camara .marco div { width: 58%; aspect-ratio: 1; border: 4px solid rgba(242, 183, 5, .9); border-radius: 18px; box-shadow: 0 0 0 2000px rgba(5, 12, 28, .35); }
+  .camara .marco { position: absolute; top: 60px; left: 0; right: 0; bottom: 112px; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+  .camara .marco div { width: 88vmin; height: 88vmin; max-width: 94%; max-height: 100%; border: 5px solid rgba(242, 183, 5, .95); border-radius: 22px; box-shadow: 0 0 0 2000px rgba(5, 12, 28, .25); }
   .camara .verificando { position: absolute; inset: 0; background: rgba(8, 20, 45, .75); display: grid; place-items: center; color: #fff; font-size: 1.2rem; font-weight: 700; }
   .panel-lateral h2 { margin: 0 0 6px; font-size: 1.6rem; color: var(--azul); }
   .panel-lateral p { margin: 0 0 14px; color: var(--suave); }
@@ -55,20 +64,22 @@
   .ced-barra { height: 6px; background: #e3d9bd; }
   .ced-barra div { height: 100%; background: var(--oro); transition: width 1s linear; }
   .ced-instr { text-align: center; font-size: 1.3rem; font-weight: 700; color: var(--azul); padding: 14px 16px 4px; }
-  .ced-grid { flex: 1; overflow: auto; padding: 14px 20px 24px; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-content: start; }
+  .ced-grid { flex: 1; overflow: auto; padding: 12px 18px 16px; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-content: start; }
   .op {
     background: #fff; border: 3px solid #d9cfb2; border-radius: 18px; padding: 14px; cursor: pointer;
-    display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; min-height: 250px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; min-height: 0; overflow: hidden;
     transition: transform .1s, border-color .15s, box-shadow .15s; color: var(--texto);
   }
   .op:active { transform: scale(.97); }
   .op:hover { border-color: var(--azul2); box-shadow: 0 6px 18px rgba(15, 43, 85, .15); }
-  .op .num { background: var(--azul); color: #fff; font-weight: 800; border-radius: 10px; padding: 4px 14px; font-size: 1.15rem; }
-  .op .img { width: 100%; max-width: 170px; aspect-ratio: 1; display: grid; place-items: center; }
-  .op .nom { font-weight: 800; font-size: 1.15rem; color: var(--azul); line-height: 1.15; }
-  .op .cand { font-size: .95rem; color: var(--suave); }
-  .op.blanco { border-style: dashed; justify-content: center; }
-  .op.blanco .img { border: 3px dashed #c9bf9f; border-radius: 14px; max-width: 140px; color: #a99f80; font-size: 1rem; font-weight: 700; }
+  .op .num { flex: none; background: var(--azul); color: #fff; font-weight: 800; border-radius: 10px; padding: 4px 14px; font-size: 1.1rem; }
+  .op .img { flex: 1 1 auto; min-height: 50px; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .op .img img, .op .img .sin-simbolo { max-width: 100%; max-height: 100%; width: auto; height: 100%; object-fit: contain; aspect-ratio: auto; }
+  .op .img .sin-simbolo { width: 100%; }
+  .op .nom { flex: none; font-weight: 800; font-size: 1.1rem; color: var(--azul); line-height: 1.15; }
+  .op .cand { flex: none; font-size: .95rem; color: var(--texto); line-height: 1.2; }
+  .op.blanco { border-style: dashed; }
+  .op.blanco .img > div { border: 3px dashed #c9bf9f; border-radius: 14px; color: #a99f80; font-size: 1rem; font-weight: 700; height: 100%; aspect-ratio: 1; max-width: 100%; display: flex; align-items: center; justify-content: center; padding: 6px; }
 
   /* Confirmación */
   .conf-img { width: 160px; height: 160px; margin: 8px auto 12px; }
@@ -138,6 +149,7 @@
     <!-- Escáner -->
     <div id="vEscaner">
       <div class="camara">
+        <div class="titulo-cam">Acerque el carnet QR</div>
         <div id="lector"></div>
         <div class="marco" id="marco"><div></div></div>
         <div class="msg-camara oculto" id="msgCamara"></div>
@@ -150,8 +162,7 @@
           <div class="tarjeta"><b id="cVotos">0</b><span>votos en esta mesa</span></div>
           <div class="tarjeta"><b id="cHora">--:--</b><span>hora</span></div>
         </div>
-        <button class="btn sec" style="width:100%" onclick="abrirSinCarnet()">🪪 Estudiante sin carnet (ID + DNI)</button>
-        <button class="btn sec" style="width:100%;margin-top:10px" id="btnCamara" onclick="cambiarCamara()">🔄 Cambiar cámara</button>
+        <button class="btn sec" id="btnCamara" onclick="cambiarCamara()">🔄 Cambiar cámara (frontal / trasera)</button>
       </div>
       <div class="bloqueo tarjeta oculto" id="bloqueo"></div>
     </div>
@@ -215,21 +226,6 @@
   </div>
 </div>
 
-<div class="modal-fondo oculto" id="mSinCarnet">
-  <form class="modal" id="fSinCarnet" style="text-align:left" autocomplete="off">
-    <h2>Estudiante sin carnet</h2>
-    <p style="color:var(--suave);margin:0">Ingrese el ID y el DNI de la estudiante. Esta autorización queda registrada.</p>
-    <label for="scId">ID de la estudiante</label>
-    <input id="scId" type="text" inputmode="numeric" required>
-    <label for="scDni">DNI</label>
-    <input id="scDni" type="text" inputmode="numeric" required>
-    <div class="acciones">
-      <button class="btn sec" type="button" onclick="cerrarSinCarnet()">Cancelar</button>
-      <button class="btn" type="submit">Verificar</button>
-    </div>
-  </form>
-</div>
-
 <div class="modal-fondo oculto" id="mSalir">
   <div class="modal">
     <h2>¿Cerrar la sesión de esta mesa?</h2>
@@ -241,9 +237,9 @@
   </div>
 </div>
 
-<script src="config.js"></script>
-<script src="comun.js"></script>
-<script src="lib/html5-qrcode.min.js"></script>
+<script src="config.js?v=2026.11.24-1"></script>
+<script src="comun.js?v=2026.11.24-1"></script>
+<script src="lib/html5-qrcode.min.js?v=2026.11.24-1"></script>
 <script>
 'use strict';
 const { api, esc, almacen, gradoTexto, toast, pitido, simboloHTML } = window.NSM;
@@ -260,8 +256,8 @@ const TITULOS = {
 
 /* ---------------- Inicio ---------------- */
 window.addEventListener('load', async () => {
-  setInterval(() => { $('cHora').textContent = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }); }, 1000);
-  if (/[?&]salir/.test(location.search)) { almacen.del(CLAVE_SESION); almacen.del('nsm2027_camara'); history.replaceState(null, '', location.pathname); }
+  setInterval(() => { $('cHora').textContent = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false }); }, 1000);
+  if (/[?&]salir/.test(location.search)) { almacen.del(CLAVE_SESION); almacen.del('nsm2027_camara'); almacen.del('nsm2026_facing'); history.replaceState(null, '', location.pathname); }
   const s = almacen.get(CLAVE_SESION);
   if (s && s.token) {
     Object.assign(S, { token: s.token, usuario: s.usuario, mesa: s.mesa });
@@ -316,6 +312,13 @@ async function cargarMesa(ligero) {
   return d;
 }
 
+function medirBarra() {
+  const b = document.querySelector('#pApp .barra');
+  if (b && b.offsetHeight) document.documentElement.style.setProperty('--barra-h', b.offsetHeight + 'px');
+}
+window.addEventListener('resize', medirBarra);
+window.addEventListener('orientationchange', () => setTimeout(medirBarra, 300));
+
 function pintarCabecera() {
   const d = S.datos;
   $('bMesa').textContent = d.mesa;
@@ -327,6 +330,7 @@ function pintarCabecera() {
   $('bEstado').textContent = e === 'ABIERTA' ? 'ABIERTA' : e === 'CERRADA' ? 'CERRADA' : 'EN PREPARACIÓN';
   $('bEstado').className = 'insignia ' + e.toLowerCase();
   $('cVotos').textContent = d.votosMesa || 0;
+  setTimeout(medirBarra, 0);
   const bloq = $('bloqueo');
   if (e !== 'ABIERTA') {
     bloq.innerHTML = e === 'CERRADA'
@@ -374,11 +378,15 @@ function irEscaner() {
 }
 
 async function iniciarEscaner() {
-  if (typeof Html5Qrcode === 'undefined') return mensajeCamara('No se cargó el lector QR. Use la opción "sin carnet".');
+  if (typeof Html5Qrcode === 'undefined') return mensajeCamara('No se cargó el lector QR. Recargue la página.');
+  if (S.iniciando) return;
+  S.iniciando = true;
   try {
+    if (S.parando) { try { await S.parando; } catch (e) { /* nada */ } }
     if (!S.escaner) {
       S.escaner = new Html5Qrcode('lector', { verbose: false });
       try { S.camaras = await Html5Qrcode.getCameras(); } catch (e) { S.camaras = []; }
+      S.facing = almacen.get('nsm2026_facing') || null;
       const guardada = almacen.get('nsm2027_camara');
       const idx = S.camaras.findIndex(c => c.id === guardada);
       if (idx >= 0) S.camIdx = idx;
@@ -386,32 +394,93 @@ async function iniciarEscaner() {
         const trasera = S.camaras.findIndex(c => /back|trasera|rear|environment/i.test(c.label));
         S.camIdx = trasera >= 0 ? trasera : 0;
       }
-      $('btnCamara').classList.toggle('oculto', S.camaras.length < 2);
     }
-    const estado = S.escaner.getState();
-    if (estado === 3) { S.escaner.resume(); return; }      // PAUSADO
-    if (estado === 2) return;                               // ESCANEANDO
-    const fuente = S.camaras.length ? S.camaras[S.camIdx].id : { facingMode: 'environment' };
-    await S.escaner.start(fuente, {
-      fps: 8,
-      qrbox: (w, h) => { const l = Math.floor(Math.min(w, h) * 0.6); return { width: l, height: l }; },
-      videoConstraints: Object.assign(S.camaras.length ? { deviceId: { exact: S.camaras[S.camIdx].id } } : { facingMode: 'environment' }, { width: { ideal: 640 }, height: { ideal: 480 } })
-    }, alLeerQR, () => {});
+    let estado = S.escaner.getState();
+    if (estado === 2) return;                               // ya está escaneando
+    if (estado === 3) { try { await S.escaner.stop(); } catch (e) { /* nada */ } }
+    if (S.vista !== 'escaner') return;
+    // Algunas tablets tardan en liberar la cámara después de apagarla: esperar un momento
+    const espera = 900 - (Date.now() - (S.ultimoStop || 0));
+    if (espera > 0) await new Promise(r => setTimeout(r, espera));
+    if (S.vista !== 'escaner') return;
+    const porEquipo = S.camaras.length >= 2 && !S.facing;
+    const fuente = porEquipo ? S.camaras[S.camIdx].id : { facingMode: S.facing || 'environment' };
+    // Intentos de más exigente a más simple
+    const intentos = [
+      Object.assign(porEquipo ? { deviceId: { exact: S.camaras[S.camIdx].id } } : { facingMode: S.facing || 'environment' }, { width: { ideal: 640 }, height: { ideal: 480 } }),
+      porEquipo ? { deviceId: S.camaras[S.camIdx].id } : { facingMode: S.facing || 'environment' },
+      null
+    ];
+    let ultimo = null, ok = false;
+    for (let i = 0; i < intentos.length && !ok; i++) {
+      try {
+        if (S.escaner.getState() === 2) { ok = true; break; }
+        const conf = { fps: 8 };
+        if (intentos[i]) conf.videoConstraints = intentos[i];
+        await S.escaner.start(intentos[i] ? fuente : { facingMode: 'environment' }, conf, alLeerQR, () => {});
+        ok = true;
+      } catch (e) {
+        ultimo = e;
+        await new Promise(r => setTimeout(r, 1500));
+        if (S.vista !== 'escaner') return;
+      }
+    }
+    if (!ok) throw ultimo || new Error('Cámara no disponible');
     $('msgCamara').classList.add('oculto');
     $('marco').classList.remove('oculto');
   } catch (e) {
-    mensajeCamara('No se pudo abrir la cámara. Permita el acceso a la cámara en el navegador y recargue la página.<br><small>' + esc(e.message || e) + '</small>');
+    const ocupada = /NotReadable|Could not start|TrackStart|in use/i.test(String(e && (e.name + ' ' + e.message + ' ' + e)));
+    mensajeCamara((ocupada
+      ? '<b>La cámara está ocupada o no respondió.</b><br>Cierre otras aplicaciones o pestañas que usen la cámara (WhatsApp, Cámara, otra pestaña del sistema) y pulse:'
+      : '<b>No se pudo abrir la cámara.</b><br>Permita el acceso a la cámara en el navegador y pulse:')
+      + '<br><button class="btn oro grande" style="margin-top:14px;pointer-events:auto" onclick="reintentarCamara()">🔄 Reintentar cámara</button>'
+      + '<br><small style="opacity:.7">' + esc(e && (e.message || e)) + '</small>');
+  } finally {
+    S.iniciando = false;
   }
+}
+
+// Vigilante: si la cámara quedó apagada estando en la pantalla del escáner, la vuelve a encender
+setInterval(() => {
+  try {
+    if (S.vista === 'escaner' && !S.ocupado && !S.iniciando && S.datos && S.datos.estado === 'ABIERTA' &&
+        S.escaner && S.escaner.getState() !== 2 && $('msgCamara').classList.contains('oculto')) iniciarEscaner();
+  } catch (e) { /* nada */ }
+}, 4000);
+
+async function reintentarCamara() {
+  $('msgCamara').classList.add('oculto');
+  try { if (S.escaner && [2, 3].includes(S.escaner.getState())) await S.escaner.stop(); } catch (e) { /* nada */ }
+  S.ultimoStop = Date.now();
+  iniciarEscaner();
 }
 
 function mensajeCamara(html) { $('msgCamara').innerHTML = '<div>' + html + '</div>'; $('msgCamara').classList.remove('oculto'); $('marco').classList.add('oculto'); }
 
-function pausarEscaner() { try { if (S.escaner && S.escaner.getState() === 2) S.escaner.pause(true); } catch (e) { /* nada */ } }
+// Apaga la cámara (mientras la estudiante vota) para liberar la tablet
+function pausarEscaner() {
+  try {
+    if (S.escaner && !S.parando && [2, 3].includes(S.escaner.getState())) {
+      S.parando = S.escaner.stop().catch(() => {}).finally(() => { S.parando = null; S.ultimoStop = Date.now(); });
+    }
+  } catch (e) { /* nada */ }
+}
 
 async function cambiarCamara() {
-  if (S.camaras.length < 2 || !S.escaner) return;
-  try { if (S.escaner.getState() !== 1) await S.escaner.stop(); } catch (e) { /* nada */ }
-  S.camIdx = (S.camIdx + 1) % S.camaras.length;
+  if (!S.escaner) return;
+  pausarEscaner();
+  if (S.parando) await S.parando;
+  if (S.camaras.length < 2 || S.facing) {
+    // La tablet no informa sus cámaras: se pide frontal o trasera directamente
+    S.facing = S.facing === 'user' ? 'environment' : 'user';
+    almacen.set('nsm2026_facing', S.facing);
+    return iniciarEscaner();
+  }
+  // Alterna entre frontal y trasera; si las etiquetas no lo dicen, pasa a la siguiente cámara
+  const esFrontal = c => /front|frontal|user|facing front|selfie/i.test(c.label);
+  const actualFrontal = esFrontal(S.camaras[S.camIdx]);
+  const otra = S.camaras.findIndex(c => esFrontal(c) !== actualFrontal);
+  S.camIdx = otra >= 0 ? otra : (S.camIdx + 1) % S.camaras.length;
   almacen.set('nsm2027_camara', S.camaras[S.camIdx].id);
   iniciarEscaner();
 }
@@ -471,10 +540,11 @@ function abrirCedula() {
       <span class="nom">${esc(l.nombre)}</span>
       ${l.candidata ? `<span class="cand">${esc(l.candidata)}</span>` : ''}
     </button>`);
-  if (d.votoBlanco) tarjetas.push(`<button class="op blanco" onclick="elegir('BLANCO')"><div class="img">VOTO<br>EN BLANCO</div><span class="nom">VOTO EN BLANCO</span></button>`);
+  if (d.votoBlanco) tarjetas.push(`<button class="op blanco" onclick="elegir('BLANCO')"><span class="num" style="visibility:hidden">—</span><div class="img"><div>VOTO<br>EN BLANCO</div></div><span class="nom">VOTO EN BLANCO</span></button>`);
   $('cedGrid').innerHTML = tarjetas.join('');
   $('cedGrid').scrollTop = 0;
   $('vCedula').classList.remove('oculto');
+  ajustarCedula();
   const total = (d.tiempoCedula || 60) * 1000;
   S.cedFin = Date.now() + total;
   clearInterval(S.cedTimer);
@@ -487,6 +557,28 @@ function abrirCedula() {
   tic();
   S.cedTimer = setInterval(tic, 250);
 }
+
+// Reparte las tarjetas para que todas quepan en la pantalla, con el texto siempre visible
+function ajustarCedula() {
+  const g = $('cedGrid');
+  const tarjetas = g.querySelectorAll('.op');
+  const n = tarjetas.length;
+  if (!n) return;
+  const W = g.clientWidth - 36, H = g.clientHeight - 28, gap = 14;
+  let txt = 0;
+  tarjetas.forEach(t => { let h = 0; t.querySelectorAll('.num,.nom,.cand').forEach(x => { h += x.offsetHeight + 6; }); txt = Math.max(txt, h); });
+  let mejor = null;
+  for (let c = 1; c <= n; c++) {
+    const r = Math.ceil(n / c);
+    const w = (W - gap * (c - 1)) / c, h = (H - gap * (r - 1)) / r;
+    const lado = Math.min(w - 32, h - txt - 34);
+    if (!mejor || lado > mejor.lado) mejor = { c, h, lado };
+  }
+  const alto = mejor.lado < 70 ? txt + 34 + 70 : mejor.h;
+  g.style.gridTemplateColumns = 'repeat(' + mejor.c + ', minmax(0, 1fr))';
+  g.style.gridAutoRows = Math.floor(alto) + 'px';
+}
+window.addEventListener('resize', () => { if (S.vista === 'cedula') ajustarCedula(); });
 
 function elegir(op) {
   S.opcion = op;
@@ -548,23 +640,6 @@ async function confirmarVoto() {
   }
 }
 
-/* ---------------- Sin carnet ---------------- */
-function abrirSinCarnet() {
-  if (S.datos.estado !== 'ABIERTA') return;
-  pausarEscaner();
-  S.vista = 'sincarnet';
-  $('scId').value = ''; $('scDni').value = '';
-  $('mSinCarnet').classList.remove('oculto');
-  setTimeout(() => $('scId').focus(), 50);
-}
-function cerrarSinCarnet() { $('mSinCarnet').classList.add('oculto'); irEscaner(); }
-$('fSinCarnet').addEventListener('submit', ev => {
-  ev.preventDefault();
-  $('mSinCarnet').classList.add('oculto');
-  S.vista = 'escaner';
-  procesarID($('scId').value.trim(), $('scDni').value.trim());
-});
-
 /* ---------------- Errores y sesión ---------------- */
 let errTimer = null;
 function mostrarError(e, acciones, segundos, titulo) {
@@ -599,6 +674,8 @@ async function salir() {
   almacen.del(CLAVE_SESION);
   location.reload();
 }
+
+NSM.vigilarVersion(() => (S.vista === 'escaner' && !S.ocupado && $('mError').classList.contains('oculto')) || (!$('pLogin').classList.contains('oculto') && !$('lClave').value), 60);
 </script>
 </body>
 </html>
