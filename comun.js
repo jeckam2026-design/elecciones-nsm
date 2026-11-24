@@ -114,5 +114,39 @@
     return '<div class="' + (clase || 'simbolo') + ' sin-simbolo" style="background:' + esc(lista.color || '#1d3f72') + '">' + esc(lista.numero) + '</div>';
   }
 
-  window.NSM = { api: api, esc: esc, almacen: almacen, gradoTexto: gradoTexto, toast: toast, imagenADataURL: imagenADataURL, pitido: pitido, esperar: esperar, simboloHTML: simboloHTML };
+  // ---- Actualización automática ----
+  // Cada página lleva <meta name="version">. Si en el servidor hay otra versión, se recarga sola
+  // cuando puedeRecargar() lo permite (nunca en medio de un voto).
+  function versionActual() {
+    const m = document.querySelector('meta[name="version"]');
+    return m ? m.content : '';
+  }
+  function vigilarVersion(puedeRecargar, cadaSeg) {
+    let pendiente = false;
+    let revisando = false;
+    async function revisar() {
+      if (revisando) return;
+      revisando = true;
+      try {
+        if (!pendiente) {
+          const r = await fetch(location.pathname + '?_v=' + Date.now(), { cache: 'no-store' });
+          if (r.ok) {
+            const m = (await r.text()).match(/<meta name="version" content="([^"]+)"/);
+            if (m && m[1] && m[1] !== versionActual()) pendiente = true;
+          }
+        }
+        if (pendiente && (!puedeRecargar || puedeRecargar())) {
+          toast('Actualizando el sistema…', 'ok');
+          try { await fetch(location.pathname, { cache: 'reload' }); } catch (e) { /* nada */ }
+          setTimeout(function () { location.reload(); }, 800);
+        }
+      } catch (e) { /* sin conexión: se intenta luego */ }
+      revisando = false;
+    }
+    setInterval(revisar, (cadaSeg || 60) * 1000);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') revisar(); });
+    setTimeout(revisar, 5000);
+  }
+
+  window.NSM = { vigilarVersion: vigilarVersion, versionActual: versionActual, api: api, esc: esc, almacen: almacen, gradoTexto: gradoTexto, toast: toast, imagenADataURL: imagenADataURL, pitido: pitido, esperar: esperar, simboloHTML: simboloHTML };
 })();
