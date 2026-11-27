@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="2026.11.24-1">
+<meta name="version" content="2026.11.26-1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230f2b55%22/%3E%3Ctext x=%2250%22 y=%2272%22 font-size=%2266%22 text-anchor=%22middle%22 fill=%22%23f2b705%22%3E✓%3C/text%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#0f2b55">
 <title>Mesa de votación · Elecciones NSM 2026</title>
-<link rel="stylesheet" href="estilos.css?v=2026.11.24-1">
+<link rel="stylesheet" href="estilos.css?v=2026.11.26-1">
 <style>
   body { overflow-x: hidden; }
   main { padding: 12px 16px; max-width: 1500px; margin: 0 auto; }
@@ -237,9 +237,9 @@
   </div>
 </div>
 
-<script src="config.js?v=2026.11.24-1"></script>
-<script src="comun.js?v=2026.11.24-1"></script>
-<script src="lib/html5-qrcode.min.js?v=2026.11.24-1"></script>
+<script src="config.js?v=2026.11.26-1"></script>
+<script src="comun.js?v=2026.11.26-1"></script>
+<script src="lib/html5-qrcode.min.js?v=2026.11.26-1"></script>
 <script>
 'use strict';
 const { api, esc, almacen, gradoTexto, toast, pitido, simboloHTML } = window.NSM;
@@ -301,6 +301,7 @@ async function cargarMesa(ligero) {
   if (ligero && S.datos) { Object.assign(S.datos, { estado: d.estado, votosMesa: d.votosMesa, modoPrueba: d.modoPrueba }); }
   else S.datos = d;
   S.mesa = d.mesa;
+  if (!ligero) cargarPadronLocal();
   almacen.set(CLAVE_SESION, { token: S.token, usuario: S.usuario, mesa: S.mesa });
   pintarCabecera();
   if ($('pApp').classList.contains('oculto')) {
@@ -347,6 +348,24 @@ function pintarCabecera() {
   }
 }
 
+// ---- Padrón local: verificación instantánea sin esperar al servidor ----
+async function cargarPadronLocal() {
+  try {
+    const r = await api('padronMesa', { token: S.token, mesa: S.mesa }, 3);
+    const m = new Map();
+    r.filas.forEach(f => m.set(f[0], { n: f[1], g: f[2], s: f[3], v: f[4], p: f[5] }));
+    S.padron = m;
+  } catch (e) { S.padron = null; }  // sin padrón local se usa la verificación en línea
+}
+async function actualizarVotados() {
+  if (!S.padron) return cargarPadronLocal();
+  try {
+    const r = await api('votados', { token: S.token });
+    r.ids.forEach(id => { const x = S.padron.get(id); if (x) x.v = 1; });
+  } catch (e) { if (e.codigo === 'SESION') sesionVencida(); }
+}
+function normIdLocal(x) { const s = String(x || '').trim().toUpperCase(); return /^\d+$/.test(s) ? String(parseInt(s, 10)) : s; }
+
 function iniciarSondeo() {
   clearInterval(S.poll);
   S.poll = setInterval(async () => {
@@ -355,6 +374,7 @@ function iniciarSondeo() {
     try {
       const d = await cargarMesa(true);
       if (d.estado === 'ABIERTA' && antes !== 'ABIERTA') { await cargarMesa(false); iniciarEscaner(); }
+      else if (d.estado === 'ABIERTA') actualizarVotados();
     } catch (e) { if (e.codigo === 'SESION') sesionVencida(); }
   }, 15000);
 }
@@ -368,7 +388,7 @@ async function mantenerPantalla() {
 
 /* ---------------- Escáner QR ---------------- */
 function irEscaner() {
-  S.vista = 'escaner'; S.ticket = null; S.alumna = null; S.opcion = null; S.ocupado = false;
+  S.vista = 'escaner'; S.ticket = null; S.alumna = null; S.opcion = null; S.ocupado = false; S.directo = false; S.nonce = null;
   $('vEscaner').classList.remove('oculto');
   $('vIdentidad').classList.add('oculto');
   $('vCedula').classList.add('oculto');
@@ -496,6 +516,7 @@ function alLeerQR(texto) {
 /* ---------------- Verificación ---------------- */
 async function procesarID(id, dni) {
   if (S.ocupado) return;
+  if (S.padron && !dni) return procesarLocal(id);
   S.ocupado = true;
   pausarEscaner();
   $('verificando').classList.remove('oculto');
@@ -522,6 +543,29 @@ function mostrarIdentidad() {
   $('iGrado').textContent = gradoTexto(S.alumna.grado);
   $('iSeccion').textContent = 'Sección ' + (S.alumna.seccion || '—');
   $('iId').textContent = 'ID ' + S.alumna.id;
+}
+
+function procesarLocal(idLeido) {
+  S.ocupado = true;
+  pausarEscaner();
+  const id = normIdLocal(idLeido);
+  const r = S.padron.get(id);
+  let err = null;
+  if (!S.datos || S.datos.estado !== 'ABIERTA') err = { codigo: 'NO_ABIERTA', message: 'La votación no está abierta.' };
+  else if (!id) err = { codigo: 'QR_INVALIDO', message: 'El código leído no es válido.' };
+  else if (!r) err = { codigo: 'NO_PADRON', message: 'El ID ' + id + ' NO figura en el padrón electoral.' };
+  else if (r.v) err = { codigo: 'YA_VOTO', message: r.n + ' YA EMITIÓ SU VOTO.' };
+  else if (!S.datos.volante && r.p && r.p.split(',').indexOf(S.mesa) < 0) err = { codigo: 'OTRA_MESA', message: r.n + ' es de ' + (r.g ? r.g + '.° ' : '') + r.s + '. Debe votar en: ' + r.p.split(',').join(' o ') + '.' };
+  if (err) {
+    pitido(false);
+    mostrarError(err, [['Entendido', 'btn grande', () => irEscaner()]], 8);
+    return;
+  }
+  pitido(true);
+  S.directo = true;
+  S.nonce = Date.now().toString(36) + Math.random().toString(36).slice(2);
+  S.alumna = { id: id, nombre: r.n, grado: r.g, seccion: r.s };
+  mostrarIdentidad();
 }
 
 function cancelarIdentidad() {
@@ -611,20 +655,26 @@ function tiempoAgotado() {
 }
 
 async function confirmarVoto() {
-  if (!S.opcion || !S.ticket) return;
+  if (!S.opcion || (!S.ticket && !S.directo)) return;
   clearInterval(S.cedTimer);
   $('mConfirmar').classList.add('oculto');
   $('mEnviando').classList.remove('oculto');
   try {
-    await api('votar', { token: S.token, ticket: S.ticket, opcion: S.opcion }, 3);
+    if (S.directo) {
+      await api('votarDirecto', { token: S.token, mesa: S.mesa, id: S.alumna.id, opcion: S.opcion, nonce: S.nonce }, 3);
+      const x = S.padron && S.padron.get(S.alumna.id);
+      if (x) x.v = 1;
+    } else {
+      await api('votar', { token: S.token, ticket: S.ticket, opcion: S.opcion }, 3);
+    }
     $('mEnviando').classList.add('oculto');
     cerrarCedula();
     S.datos.votosMesa = (S.datos.votosMesa || 0) + 1;
     $('cVotos').textContent = S.datos.votosMesa;
-    S.ticket = null; S.opcion = null;
+    S.ticket = null; S.opcion = null; S.directo = false;
     $('vGracias').classList.remove('oculto');
     pitido(true);
-    setTimeout(() => irEscaner(), 3000);
+    setTimeout(() => irEscaner(), 2000);
   } catch (e) {
     $('mEnviando').classList.add('oculto');
     if (e.codigo === 'SESION') { cerrarCedula(); return sesionVencida(); }
@@ -636,6 +686,7 @@ async function confirmarVoto() {
       return;
     }
     cerrarCedula();
+    if (e.codigo === 'YA_VOTO' && S.alumna && S.padron) { const x = S.padron.get(S.alumna.id); if (x) x.v = 1; }
     mostrarError(e, [['Entendido', 'btn grande', () => irEscaner()]], 8);
   }
 }
